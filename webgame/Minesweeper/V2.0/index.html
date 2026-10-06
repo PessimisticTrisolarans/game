@@ -1,0 +1,2766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>扫雷</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=ZCOOL+KuaiLe&family=Caveat:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== 全局变量 ===== */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            --menu-bg: rgba(255,255,255,0.08);
+            --menu-border: rgba(255,255,255,0.1);
+            --menu-text: #ddd;
+            --menu-hover-bg: rgba(255,255,255,0.12);
+            --cell-unrevealed: #4a4f6a;
+            --cell-revealed: #3a3f5c;
+            --cell-border: #1e1e2e;
+            --text-color: #eee;
+            --number-colors: #4dabf7, #51cf66, #ff6b6b, #b197fc, #ffa94d, #22b8cf, #f06595, #adb5bd;
+            --flag-color: #ff6b6b;
+            --question-color: #fff;
+            --board-bg: #2b2f42;
+            --topbar-bg: rgba(255,255,255,0.08);
+            --topbar-border: rgba(255,255,255,0.12);
+            --topbar-text: #eee;
+            --led-bg: rgba(0,0,0,0.3);
+            --led-text: #ffffff;
+            --tile-radius: 2px;
+            --tile-bevel: false;
+            --mine-emoji: none;
+            --font-family: 'Segoe UI', Arial, sans-serif;
+            --cell-gap: 0px;
+            --border-style: solid;
+            --border-width: 0.5px;
+            --bevel-light: transparent;
+            --bevel-dark: transparent;
+            --paper-texture: none;
+            --number-font-size-ratio: 0.5;
+            --num-shadow: none;
+        }
+
+        /* ---------- 霓虹暗夜（默认主题） ---------- */
+        body[data-theme="neon-dark"] {
+            --bg-gradient: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            --menu-bg: rgba(255,255,255,0.08);
+            --menu-border: rgba(255,255,255,0.1);
+            --menu-text: #ddd;
+            --menu-hover-bg: rgba(255,255,255,0.12);
+            --cell-unrevealed: #4a4f6a;
+            --cell-revealed: #3a3f5c;
+            --cell-border: #5a5f7a;
+            --text-color: #eee;
+            --number-colors: #4dabf7, #51cf66, #ff6b6b, #b197fc, #ffa94d, #22b8cf, #f06595, #adb5bd;
+            --flag-color: #ff6b6b;
+            --question-color: #fff;
+            --board-bg: #2b2f42;
+            --topbar-bg: rgba(255,255,255,0.08);
+            --topbar-border: rgba(255,255,255,0.12);
+            --topbar-text: #eee;
+            --led-bg: rgba(0,0,0,0.3);
+            --led-text: #ffffff;
+            --tile-radius: 2px;
+            --tile-bevel: false;
+            --mine-emoji: none;
+            --font-family: 'Segoe UI', Arial, sans-serif;
+            --cell-gap: 0px;
+            --border-style: solid;
+            --border-width: 1.5px;
+            --bevel-light: transparent;
+            --bevel-dark: transparent;
+            --paper-texture: none;
+            --number-font-size-ratio: 0.5;
+            --num-shadow: none;
+        }
+
+        /* ---------- 复古像素 ---------- */
+        body[data-theme="retro"] {
+            --bg-gradient: #C0C0C0;
+            --menu-bg: #C0C0C0;
+            --menu-border: #808080;
+            --menu-text: #000000;
+            --menu-hover-bg: #D0D0D0;
+            --cell-unrevealed: #C0C0C0;
+            --cell-revealed: #D0D0D0;
+            --cell-border: #808080;
+            --text-color: #000000;
+            --number-colors: #0000ff, #008000, #ff0000, #000080, #800000, #008080, #000000, #808080;
+            --flag-color: #ff0000;
+            --question-color: #000000;
+            --board-bg: #C0C0C0;
+            --topbar-bg: #C0C0C0;
+            --topbar-border: #808080;
+            --topbar-text: #000000;
+            --led-bg: #000000;
+            --led-text: #ff0000;
+            --tile-radius: 0px;
+            --tile-bevel: true;
+            --mine-emoji: none;
+            --font-family: 'Press Start 2P', 'Courier New', monospace;
+            --cell-gap: 0px;
+            --border-style: solid;
+            --border-width: 3px;
+            --bevel-light: #ffffff;
+            --bevel-dark: #808080;
+            --paper-texture: none;
+            --number-font-size-ratio: 0.45;
+            --num-shadow: none;
+        }
+
+        body[data-theme="retro"] .menu-item {
+            font-size: 0.65em;
+            padding: 12px 20px;
+            width: 100%;
+            max-width: 520px;
+            line-height: 1.4;
+            border-width: 3px;
+            border-style: solid;
+            border-color: #ffffff #808080 #808080 #ffffff;
+            background: #C0C0C0;
+        }
+        body[data-theme="retro"] #menu h1 {
+            font-size: 4em;
+            margin-bottom: 24px;
+            color: #000;
+            -webkit-text-fill-color: #000;
+            background: none;
+        }
+        body[data-theme="retro"] #menu p { font-size: 0.6em; margin-top: 16px; }
+        body[data-theme="retro"] #stats { font-size: 0.6em; margin-top: 12px; }
+        body[data-theme="retro"] #btn-settings, body[data-theme="retro"] #btn-archive {
+            border-width: 3px;
+            border-style: solid;
+            border-color: #ffffff #808080 #808080 #ffffff;
+            background: #C0C0C0;
+            font-size: 0.65em;
+            padding: 8px 20px;
+        }
+        body[data-theme="retro"] .menu-item.selected {
+            border-color: #808080 #ffffff #ffffff #808080;
+            background: #D0D0D0;
+        }
+
+        /* ---------- 极简扁平 ---------- */
+        body[data-theme="flat"] {
+            --bg-gradient: #F5F5F7;
+            --menu-bg: #FFFFFF;
+            --menu-border: #E5E5EA;
+            --menu-text: #1C1C1E;
+            --menu-hover-bg: #F2F2F7;
+            --cell-unrevealed: #646464;
+            --cell-revealed: #DDDDDD;
+            --cell-border: transparent;
+            --text-color: #1C1C1E;
+            --number-colors: #4A90D9, #34C759, #FF3B30, #AF52DE, #FF9500, #5AC8FA, #8E8E93, #1C1C1E;
+            --flag-color: #FF9500;
+            --question-color: #8E8E93;
+            --board-bg: #FFFFFF;
+            --topbar-bg: #F2F2F7;
+            --topbar-border: #E5E5EA;
+            --topbar-text: #1C1C1E;
+            --led-bg: #E5E5EA;
+            --led-text: #1C1C1E;
+            --tile-radius: 6px;
+            --tile-bevel: false;
+            --mine-emoji: "💥";
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --cell-gap: 3px;
+            --border-style: none;
+            --border-width: 0px;
+            --bevel-light: transparent;
+            --bevel-dark: transparent;
+            --paper-texture: none;
+            --number-font-size-ratio: 0.6;
+            --num-shadow: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body[data-theme="flat"] {
+                --bg-gradient: #1C1C1E;
+                --menu-bg: #2C2C2E;
+                --menu-border: #3A3A3C;
+                --menu-text: #FFFFFF;
+                --menu-hover-bg: #3A3A3C;
+                --cell-unrevealed: #48484A;
+                --cell-revealed: #1C1C1E;
+                --text-color: #FFFFFF;
+                --board-bg: #1C1C1E;
+                --topbar-bg: #2C2C2E;
+                --topbar-border: #3A3A3C;
+                --topbar-text: #FFFFFF;
+                --led-bg: #3A3A3C;
+                --led-text: #FFFFFF;
+            }
+        }
+
+        /* ---------- 手绘自然 ---------- */
+        body[data-theme="nature"] {
+            --bg-gradient: #FDF6E3;
+            --menu-bg: #F5E6C8;
+            --menu-border: #BEA880;
+            --menu-text: #5D4E37;
+            --menu-hover-bg: #EAD9B8;
+            --cell-unrevealed: #996633;
+            --cell-revealed: #FFCC00;
+            --cell-border: #BEA880;
+            --text-color: #5D4E37;
+            --number-colors: #4A90D9, #D94A7B, #D98A4A, #8B4513, #A0522D, #3CB371, #FF7F50, #696969;
+            --flag-color: #D94A4A;
+            --question-color: #3CB371;
+            --board-bg: #F5E6C8;
+            --topbar-bg: #F5E6C8;
+            --topbar-border: #BEA880;
+            --topbar-text: #5D4E37;
+            --led-bg: transparent;
+            --led-text: #5D4E37;
+            --tile-radius: 8px;
+            --tile-bevel: false;
+            --mine-emoji: "🌰";
+            --font-family: 'Caveat', 'ZCOOL KuaiLe', 'Comic Sans MS', cursive;
+            --cell-gap: 2px;
+            --border-style: dashed;
+            --border-width: 2px;
+            --bevel-light: transparent;
+            --bevel-dark: transparent;
+            --paper-texture: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+            --number-font-size-ratio: 0.65;
+            --num-shadow: none;
+        }
+
+        /* ===== 通用样式 ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: var(--font-family);
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            overflow: hidden;
+            color: var(--text-color);
+            transition: background 0.3s;
+        }
+        #menu { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; padding: 20px; }
+        #menu h1 { 
+            font-size: 3.5em;
+            margin-bottom: 24px; 
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #1dd1a1); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+
+        .menu-item {
+            font-size: 1.0em;
+            padding: 14px 22px;
+            margin: 6px 0;
+            width: 100%;
+            max-width: 520px;
+            text-align: center;
+            background: var(--menu-bg);
+            border: 1px solid var(--menu-border);
+            border-radius: 10px;
+            color: var(--menu-text);
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .menu-item:hover { transform: translateY(-2px); background: var(--menu-hover-bg); }
+        .menu-item.selected { border-color: #4CAF50; background: rgba(76,175,80,0.15); color: #fff; }
+        body[data-theme="retro"] .menu-item.selected { color: #000; }
+
+        /* ===== 左右并排布局 ===== */
+        .menu-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 520px;
+            margin: 6px 0;
+        }
+        .menu-row .menu-item {
+            margin: 0;
+            flex: 1;
+            min-width: unset !important;
+            padding: 14px 0;
+        }
+        body[data-theme="retro"] .menu-row .menu-item {
+            padding: 12px 0;
+        }
+
+        /* ===== 菜单按钮行（设置与存档对称） ===== */
+        .menu-button-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 520px;
+            margin-top: 12px;
+        }
+        .menu-button-row button {
+            flex: 1;
+            padding: 5px 16px;
+            background: var(--menu-bg);
+            border: 1px solid var(--menu-border);
+            border-radius: 8px;
+            color: var(--menu-text);
+            cursor: pointer;
+            font-size: 0.8em;
+            font-family: var(--font-family);
+        }
+        .menu-button-row button:hover {
+            background: var(--menu-hover-bg);
+        }
+
+        #menu p { color: var(--text-color); margin-top: 12px; font-size: 0.75em; }
+        
+        /* ===== 主菜单统计信息与清除按钮布局 ===== */
+        .stats-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        #stats { font-size: 0.8em; color: var(--text-color); }
+        #btn-clear-stats {
+            padding: 3px 10px;
+            font-size: 0.75em;
+            background: var(--menu-bg);
+            border: 1px solid var(--menu-border);
+            border-radius: 6px;
+            color: var(--menu-text);
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: var(--font-family);
+        }
+        #btn-clear-stats:hover {
+            background: var(--menu-hover-bg);
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+        /* ========================================= */
+
+        #game { display: none; position: relative; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: center; padding: 0; }
+        #top-bar-secondary { display: flex; align-items: center; width: 90%; max-width: 600px; margin-bottom: 2px; padding: 2px 10px; }
+        #btn-home { background: rgba(255,255,255,0.1); border: none; font-size: 0.9em; cursor: pointer; color: var(--text-color); padding: 2px 5px; border-radius: 50%; }
+        #board-size { font-family: var(--font-family); background: var(--led-bg); padding: 2px 8px; border-radius: 0; font-size: 0.6em; color: var(--led-text); margin-left: 8px; display: none; }
+        #custom-inputs { display: none; gap: 4px; margin-left: 8px; }
+        #custom-inputs input { width: 32px; padding: 1px; font-size: 0.55em; background: var(--led-bg); border: 1px solid var(--menu-border); color: var(--led-text); text-align: center; font-family: var(--font-family); }
+        #hp-display { font-family: var(--font-family); background: var(--led-bg); padding: 2px 8px; border-radius: 0; font-size: 0.6em; color: #ff6b6b; margin-left: 8px; display: none; }
+        #top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 2px;
+            padding: 3px 10px;
+            background: var(--topbar-bg);
+            border-radius: 8px;
+            border: 1px solid var(--topbar-border);
+            color: var(--topbar-text);
+            font-weight: bold;
+        }
+        #mines-count, #timer {
+            font-family: var(--font-family);
+            background: var(--led-bg);
+            padding: 2px 6px;
+            border-radius: 0;
+            font-size: 0.6em;
+            min-width: 32px;
+            text-align: center;
+            color: var(--led-text);
+        }
+        #smiley { font-size: 1.1em; background: none; border: none; cursor: pointer; }
+        #canvas-wrapper {
+            max-width: 100%;
+            max-height: calc(100vh - 150px);
+            overflow: auto;
+            border-radius: 10px;
+            background: var(--board-bg);
+            padding: 2px;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+            background-image: var(--paper-texture);
+            background-size: 200px 200px;
+        }
+        canvas {
+            display: block;
+            margin: auto;
+            background: var(--board-bg);
+            border-radius: 6px;
+            touch-action: pan-x pan-y;
+            image-rendering: auto;
+        }
+        body[data-theme="retro"] canvas {
+            image-rendering: pixelated;
+        }
+        #rainbow-bar-container { width: 100%; height: 4px; background: rgba(0,0,0,0.4); border-radius: 3px; overflow: hidden; margin-bottom: 2px; display: none; }
+        #rainbow-bar { height: 100%; width: 100%; background: linear-gradient(90deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3); background-size: 400% 100%; animation: rainbow-slide 3s linear infinite; }
+        @keyframes rainbow-slide { 0% { background-position: 0% 0%; } 100% { background-position: 400% 0%; } }
+        #btn-auto-flag { display: block; margin: 3px auto; padding: 3px 12px; font-size: 0.7em; background: var(--menu-bg); border: 1px solid var(--menu-border); border-radius: 12px; color: var(--menu-text); cursor: pointer; font-family: var(--font-family); }
+        #endless-rules { display: none; color: var(--text-color); font-size: 0.55em; text-align: left; background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 6px; margin: 0 auto 4px; width: 90%; max-width: 600px; white-space: pre-line; font-family: var(--font-family); }
+        
+        /* ===== 无尽挑战统计信息位置（移到右上角） ===== */
+        #endless-stats {
+            display: none;
+            position: absolute;
+            top: 65px;
+            right: 10px;
+            color: var(--text-color);
+            font-size: 0.55em;
+            background: rgba(0,0,0,0.5);
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-family: var(--font-family);
+            white-space: pre-line;
+            z-index: 10;
+        }
+        /* ==================================================== */
+
+        #easy-info { display: none; color: var(--text-color); font-size: 0.65em; text-align: center; margin-top: 3px; font-family: var(--font-family); }
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,20,0.75); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 20; }
+        #overlay span { color: #fff; font-size: 1.2em; margin: 12px; font-family: var(--font-family); text-align: center; }
+        #overlay button { font-size: 0.8em; padding: 6px 16px; margin: 4px; border: none; border-radius: 16px; background: rgba(255,255,255,0.18); color: #fff; cursor: pointer; width: 130px; border: 1px solid rgba(255,255,255,0.25); font-family: var(--font-family); }
+        #custom-dialog { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 30; justify-content: center; align-items: center; }
+        .dialog-box { background: rgba(30,30,50,0.95); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 20px; width: 280px; text-align: center; color: var(--text-color); font-family: var(--font-family); }
+        .dialog-box h2 { margin-bottom: 14px; font-size: 1.1em; }
+        .input-group { display: flex; justify-content: space-between; margin: 8px 0; align-items: center; }
+        .input-group label { font-size: 0.85em; }
+        .input-group input { width: 50px; padding: 3px 6px; font-size: 0.85em; background: rgba(255,255,255,0.1); border: 1px solid var(--menu-border); color: var(--text-color); border-radius: 6px; text-align: center; font-family: var(--font-family); }
+        .dialog-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
+        .dialog-buttons button { padding: 5px 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--menu-border); background: var(--menu-bg); color: var(--menu-text); font-family: var(--font-family); font-size: 0.85em; }
+
+        #settings-dialog {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 35;
+            justify-content: center;
+            align-items: center;
+        }
+        #settings-dialog .dialog-box {
+            background: #1a1a2e;
+            color: #eee;
+            border: 1px solid rgba(255,255,255,0.15);
+            width: 300px;
+        }
+        #settings-dialog .dialog-box h2 { color: #fff; }
+        #settings-dialog .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 12px 0;
+        }
+        #settings-dialog .setting-row label {
+            color: #ddd;
+            font-size: 0.9em;
+            flex: 1;
+            text-align: left;
+        }
+        #settings-dialog .theme-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            width: 100%;
+            margin-top: 4px;
+        }
+        #settings-dialog .theme-buttons button {
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.06);
+            color: #ccc;
+            font-size: 0.7em;
+            font-family: var(--font-family);
+        }
+        #settings-dialog .theme-buttons button.active {
+            border-color: #4CAF50;
+            background: rgba(76,175,80,0.25);
+            color: #fff;
+        }
+        #settings-dialog #btn-close-settings {
+            margin-top: 14px;
+            padding: 5px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #ddd;
+            font-family: var(--font-family);
+            font-size: 0.8em;
+        }
+        #settings-dialog .toggle {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+        #settings-dialog .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        #settings-dialog .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #555;
+            transition: .3s;
+            border-radius: 22px;
+            overflow: hidden;
+        }
+        #settings-dialog .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        #settings-dialog input:checked + .slider {
+            background-color: #4CAF50;
+        }
+        #settings-dialog input:checked + .slider:before {
+            left: calc(100% - 19px);
+        }
+
+        #tutorial-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 40; display: none; justify-content: center; align-items: center; flex-direction: column; color: #fff; font-size: 0.9em; font-family: var(--font-family); }
+        #tutorial-overlay button { margin-top: 16px; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-family: var(--font-family); }
+        #num-keyboard { display: none; position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.9); border-radius: 12px; padding: 8px; z-index: 100; grid-template-columns: repeat(3, 40px); gap: 5px; }
+        #num-keyboard button { width: 40px; height: 40px; font-size: 1em; border: none; border-radius: 8px; background: rgba(255,255,255,0.15); color: #fff; cursor: pointer; font-family: var(--font-family); }
+        #num-keyboard button:active { background: rgba(255,255,255,0.3); }
+        #num-keyboard .key-special { background: rgba(255,107,107,0.3); }
+
+        #loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-gradient); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 50; color: var(--text-color); text-align: center; padding: 30px; }
+        #loading-overlay .tip-text { font-size: 1em; max-width: 80%; line-height: 1.6; font-family: var(--font-family); }
+
+        /* ===== 非凡自定义编辑器 ===== */
+        #editor-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-gradient);
+            z-index: 60;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0;
+        }
+        /* 包裹容器：从屏幕上方 5vh 处开始，留有一小块区域 */
+        #editor-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 100%;
+            padding-top: 5vh;
+        }
+        #editor-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--topbar-bg);
+            padding: 8px 12px;
+            border-radius: 0;
+            border: 1px solid var(--topbar-border);
+            border-left: none;
+            border-right: none;
+            margin-bottom: 0px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+        #editor-toolbar input {
+            width: 38px;
+            height: 30px;
+            text-align: center;
+            background: var(--led-bg);
+            border: 1px solid var(--menu-border);
+            color: var(--led-text);
+            border-radius: 4px;
+            font-family: var(--font-family);
+            font-size: 0.9em;
+        }
+        #editor-toolbar span {
+            color: var(--text-color);
+            font-size: 0.9em;
+        }
+        .tool-btn {
+            width: 38px;
+            height: 38px;
+            font-size: 1.15em;
+            border: 1px solid var(--menu-border);
+            border-radius: 8px;
+            background: var(--menu-bg);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .tool-btn.active {
+            background: rgba(76,175,80,0.4);
+            border-color: #4CAF50;
+            transform: scale(1.05);
+        }
+        #btn-start-edit {
+            padding: 8px 16px;
+            font-size: 0.85em;
+            font-weight: bold;
+            background: rgba(76,175,80,0.3);
+            border: 1px solid #4CAF50;
+            color: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-family);
+        }
+        #btn-start-edit:hover {
+            background: rgba(76,175,80,0.6);
+        }
+        #editor-canvas {
+            background: var(--board-bg);
+            border-radius: 0 0 6px 6px;
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+            touch-action: none;
+        }
+
+        /* ===== 存档面板 ===== */
+        #archive-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 70;
+            justify-content: center;
+            align-items: center;
+        }
+        #archive-box {
+            background: rgba(30,30,50,0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 16px;
+            width: 90%;
+            max-width: 500px;
+            color: var(--text-color);
+            font-family: var(--font-family);
+        }
+        #archive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        #archive-header h2 {
+            font-size: 1.1em;
+            color: #fff;
+        }
+        #btn-close-archive {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #ddd;
+            padding: 4px 12px;
+            cursor: pointer;
+            font-family: var(--font-family);
+        }
+        #archive-content {
+            width: 100%;
+            height: 200px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--menu-border);
+            border-radius: 8px;
+            color: #eee;
+            font-family: monospace;
+            font-size: 0.8em;
+            padding: 8px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .archive-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .archive-text {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-right: 10px;
+            user-select: text;
+            -webkit-user-select: text;
+        }
+        .archive-btn-group {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .archive-copy-btn {
+            background: rgba(76, 175, 80, 0.3);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4CAF50;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-family: var(--font-family);
+            transition: all 0.2s;
+        }
+        .archive-copy-btn:hover {
+            background: rgba(76, 175, 80, 0.6);
+            color: #fff;
+        }
+        .archive-copy-btn.copied {
+            background: rgba(76, 175, 80, 0.8);
+            color: #fff;
+        }
+        .archive-delete-btn {
+            background: rgba(255, 107, 107, 0.3);
+            border: 1px solid rgba(255, 107, 107, 0.5);
+            color: #ff6b6b;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 0.8em;
+            font-family: var(--font-family);
+            transition: all 0.2s;
+        }
+        .archive-delete-btn:hover {
+            background: rgba(255, 107, 107, 0.6);
+            color: #fff;
+        }
+        .archive-empty {
+            text-align: center;
+            color: #888;
+            margin-top: 20px;
+        }
+
+        /* ===== 加载输入框 ===== */
+        #load-overlay {
+            display: none;
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            z-index: 70;
+            justify-content: center;
+            align-items: center;
+        }
+        #load-box {
+            background: rgba(30,30,50,0.95);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 16px;
+            width: 90%;
+            max-width: 500px;
+            color: var(--text-color);
+            font-family: var(--font-family);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .load-input-group {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+        }
+        .load-input-group input {
+            flex: 1;
+            width: auto;
+            padding: 10px;
+            font-size: 1em;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--menu-border);
+            border-radius: 8px;
+            color: #eee;
+            font-family: monospace;
+        }
+        #btn-paste-archive {
+            padding: 0 16px;
+            background: var(--menu-bg);
+            border: 1px solid var(--menu-border);
+            color: var(--menu-text);
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: var(--font-family);
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+        #btn-paste-archive:hover {
+            background: var(--menu-hover-bg);
+        }
+        #load-box .load-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        #load-box button {
+            padding: 6px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--menu-border);
+            background: var(--menu-bg);
+            color: var(--menu-text);
+            font-family: var(--font-family);
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <h1>扫雷</h1>
+        <div class="menu-item selected" data-mode="easy">简单 (9x9, 10雷)</div>
+        <div class="menu-item" data-mode="medium">中等 (16x16, 40雷)</div>
+        <div class="menu-item" data-mode="hard">困难 (30×16, 99雷)</div>
+        <div class="menu-item" data-mode="fullscreen">全屏 (自动适配)</div>
+        <div class="menu-item" data-mode="endless">无尽挑战 (16x12, 循环)</div>
+        
+        <div class="menu-row">
+            <div class="menu-item" data-mode="classic-custom">经典自定义</div>
+            <div class="menu-item" data-mode="extraordinary-custom">非凡自定义</div>
+        </div>
+        
+        <p>操作：点击插旗，长按翻开，首次点击直接翻开</p>
+        
+        <div class="stats-row">
+            <div id="stats">加载中...</div>
+            <button id="btn-clear-stats">清除</button>
+        </div>
+        
+        <div class="menu-button-row">
+            <button id="btn-settings">设置</button>
+            <button id="btn-archive">存档</button>
+        </div>
+    </div>
+
+    <div id="game">
+        <div id="top-bar-secondary">
+            <button id="btn-home">🏠</button>
+            <span id="board-size"></span>
+            <div id="custom-inputs">
+                <input type="text" id="input-rows" value="9" readonly>
+                <input type="text" id="input-cols" value="9" readonly>
+                <input type="text" id="input-mines" value="10" readonly>
+            </div>
+            <span id="hp-display" style="display:none;">❤️100</span>
+        </div>
+        <div id="top-bar">
+            <span id="mines-count">000</span>
+            <button id="smiley">😊</button>
+            <span id="timer">000</span>
+        </div>
+        <div id="rainbow-bar-container"><div id="rainbow-bar"></div></div>
+        <div id="canvas-wrapper"><canvas id="cv"></canvas></div>
+        <button id="btn-auto-flag">自动标雷：关</button>
+        <div id="endless-rules"></div>
+        <div id="easy-info">点击格子插旗，长按翻开，数字表示周围雷数</div>
+        <div id="endless-stats"></div>
+        <div id="overlay">
+            <span id="result-text"></span>
+            <button id="btn-restart">再来一局</button>
+            <button id="btn-menu">返回菜单</button>
+        </div>
+    </div>
+
+    <div id="editor-overlay">
+        <div id="editor-content">
+            <div id="editor-toolbar">
+                <input type="text" id="edit-rows" value="7" readonly>
+                <span>×</span>
+                <input type="text" id="edit-cols" value="7" readonly>
+                <button id="tool-delete" class="tool-btn" title="删除格子（先删雷）">⛏️</button>
+                <button id="tool-add" class="tool-btn" title="恢复格子">🧱</button>
+                <button id="tool-mine" class="tool-btn" title="放置地雷">💣</button>
+                <button id="btn-start-edit">开始</button>
+                <button id="btn-save-custom" class="tool-btn" title="保存存档">💾</button>
+                <button id="btn-load-custom" class="tool-btn" title="加载存档">📥</button>
+            </div>
+            <canvas id="editor-canvas"></canvas>
+        </div>
+    </div>
+
+    <div id="archive-overlay">
+        <div id="archive-box">
+            <div id="archive-header">
+                <h2>存档</h2>
+                <button id="btn-close-archive">关闭</button>
+            </div>
+            <div id="archive-content" class="archive-list">
+                <div class="archive-empty">暂无存档</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="load-overlay">
+        <div id="load-box">
+            <div class="load-input-group">
+                <input type="text" id="load-input" placeholder="输入存档字符">
+                <button id="btn-paste-archive">粘贴</button>
+            </div>
+            <div class="load-buttons">
+                <button id="btn-load-confirm">确定</button>
+                <button id="btn-load-cancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="tip-text" id="tip-text"></div>
+    </div>
+
+    <div id="custom-dialog">
+        <div class="dialog-box">
+            <h2>经典自定义雷区</h2>
+            <div class="input-group"><label>行数</label><input type="text" id="input-rows-dialog" value="9" readonly></div>
+            <div class="input-group"><label>列数</label><input type="text" id="input-cols-dialog" value="9" readonly></div>
+            <div class="input-group"><label>雷数</label><input type="text" id="input-mines-dialog" value="10" readonly></div>
+            <div class="dialog-buttons">
+                <button id="btn-custom-confirm">确定</button>
+                <button id="btn-custom-cancel">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-dialog">
+        <div class="dialog-box">
+            <h2>设置</h2>
+            <div class="setting-row">
+                <label>音效</label>
+                <label class="toggle"><input type="checkbox" id="sound-toggle"><span class="slider"></span></label>
+            </div>
+            <div class="setting-row">
+                <label>触觉反馈</label>
+                <label class="toggle"><input type="checkbox" id="vibrate-toggle"><span class="slider"></span></label>
+            </div>
+            <div class="setting-row" style="flex-wrap: wrap; gap: 6px 0;">
+                <label style="flex: 0 0 100%;">主题</label>
+                <div class="theme-buttons" id="theme-buttons">
+                    <button data-theme="neon-dark">霓虹暗夜</button>
+                    <button data-theme="retro">复古像素</button>
+                    <button data-theme="flat">极简扁平</button>
+                    <button data-theme="nature">手绘自然</button>
+                </div>
+            </div>
+            <button id="btn-close-settings">关闭</button>
+        </div>
+    </div>
+
+    <div id="tutorial-overlay">
+        操作说明：点击格子插旗，长按翻开，数字表示周围雷数
+        <button id="btn-close-tutorial">知道了</button>
+    </div>
+
+    <div id="num-keyboard">
+        <button>1</button><button>2</button><button>3</button>
+        <button>4</button><button>5</button><button>6</button>
+        <button>7</button><button>8</button><button>9</button>
+        <button>0</button><button class="key-special" id="key-back">←</button>
+        <button class="key-special" id="key-ok">确定</button>
+    </div>
+
+    <script>
+        'use strict';
+
+        const memoryStorage = {};
+        const storage = {
+            getItem(key) {
+                try { return window['local' + 'Storage'].getItem(key); }
+                catch (e) { return memoryStorage[key] !== undefined ? memoryStorage[key] : null; }
+            },
+            setItem(key, value) {
+                try { window['local' + 'Storage'].setItem(key, value); }
+                catch (e) { memoryStorage[key] = String(value); }
+            },
+            removeItem(key) {
+                try { window['local' + 'Storage'].removeItem(key); }
+                catch (e) { delete memoryStorage[key]; }
+            }
+        };
+
+        const DIFFICULTIES = {
+            easy: { rows: 9, cols: 9, mines: 10 },
+            medium: { rows: 16, cols: 16, mines: 40 },
+            hard: { rows: 30, cols: 16, mines: 99 },
+            endless: { rows: 16, cols: 12, mines: 30 }
+        };
+        const LONG_PRESS_MS = 500;
+        const FLASH_DURATION_MS = 300;
+        const DRAG_THRESHOLD = 10;
+        const ENDLESS_COUNTDOWN_MS = 60000;
+        const ENDLESS_LOADING_MS = 30000;
+
+        const TIPS = [
+            '数字表示周围8格中的地雷数量',
+            '长按格子可以翻开，点击可以插旗',
+            '双击数字可以快速翻开周围安全格子',
+            '首次点击一定是安全的',
+            '善用旗帜标记，避免误触',
+            '无尽挑战：留意彩虹条，滚动前标记好顶部雷区',
+            '困难模式需要耐心和推理',
+            '二选一时，相信直觉！',
+            '设置里可以更换主题和开关音效',
+            '挑战模式没有胜利，只有更长的生存时间'
+        ];
+
+        const menuDiv = document.getElementById('menu');
+        const gameDiv = document.getElementById('game');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const tipText = document.getElementById('tip-text');
+        const canvas = document.getElementById('cv');
+        const ctx = canvas.getContext('2d');
+        const canvasWrapper = document.getElementById('canvas-wrapper');
+        const minesCountSpan = document.getElementById('mines-count');
+        const timerSpan = document.getElementById('timer');
+        const boardSizeSpan = document.getElementById('board-size');
+        const hpDisplay = document.getElementById('hp-display');
+        const smileyBtn = document.getElementById('smiley');
+        const btnHome = document.getElementById('btn-home');
+        const overlay = document.getElementById('overlay');
+        const resultText = document.getElementById('result-text');
+        const btnRestart = document.getElementById('btn-restart');
+        const btnMenu = document.getElementById('btn-menu');
+        const menuItems = document.querySelectorAll('.menu-item');
+        const rainbowBarContainer = document.getElementById('rainbow-bar-container');
+        const rainbowBar = document.getElementById('rainbow-bar');
+        const customInputs = document.getElementById('custom-inputs');
+        const inputRows = document.getElementById('input-rows');
+        const inputCols = document.getElementById('input-cols');
+        const inputMines = document.getElementById('input-mines');
+        const numKeyboard = document.getElementById('num-keyboard');
+        const easyInfo = document.getElementById('easy-info');
+        const endlessStats = document.getElementById('endless-stats');
+        const endlessRules = document.getElementById('endless-rules');
+        const btnAutoFlag = document.getElementById('btn-auto-flag');
+        const customDialog = document.getElementById('custom-dialog');
+        const inputRowsDialog = document.getElementById('input-rows-dialog');
+        const inputColsDialog = document.getElementById('input-cols-dialog');
+        const inputMinesDialog = document.getElementById('input-mines-dialog');
+        const btnCustomConfirm = document.getElementById('btn-custom-confirm');
+        const btnCustomCancel = document.getElementById('btn-custom-cancel');
+        const settingsDialog = document.getElementById('settings-dialog');
+        const soundToggle = document.getElementById('sound-toggle');
+        const vibrateToggle = document.getElementById('vibrate-toggle');
+        const themeButtons = document.getElementById('theme-buttons');
+        const btnCloseSettings = document.getElementById('btn-close-settings');
+        const tutorialOverlay = document.getElementById('tutorial-overlay');
+        const btnCloseTutorial = document.getElementById('btn-close-tutorial');
+        const statsDiv = document.getElementById('stats');
+        
+        const btnClearStats = document.getElementById('btn-clear-stats');
+
+        const btnArchive = document.getElementById('btn-archive');
+        const archiveOverlay = document.getElementById('archive-overlay');
+        const archiveContent = document.getElementById('archive-content');
+        const btnCloseArchive = document.getElementById('btn-close-archive');
+        const btnSaveCustom = document.getElementById('btn-save-custom');
+        const btnLoadCustom = document.getElementById('btn-load-custom');
+        const loadOverlay = document.getElementById('load-overlay');
+        const loadInput = document.getElementById('load-input');
+        const btnLoadConfirm = document.getElementById('btn-load-confirm');
+        const btnLoadCancel = document.getElementById('btn-load-cancel');
+        const btnPasteArchive = document.getElementById('btn-paste-archive');
+
+        const editorOverlay = document.getElementById('editor-overlay');
+        const editRowsInput = document.getElementById('edit-rows');
+        const editColsInput = document.getElementById('edit-cols');
+        const toolDeleteBtn = document.getElementById('tool-delete');
+        const toolAddBtn = document.getElementById('tool-add');
+        const toolMineBtn = document.getElementById('tool-mine');
+        const btnStartEdit = document.getElementById('btn-start-edit');
+        const editorCanvas = document.getElementById('editor-canvas');
+        const editorCtx = editorCanvas.getContext('2d');
+
+        let customGrid = [];
+        let customRows = 7;
+        let customCols = 7;
+        let customTool = 'add';
+        let editorCellSize = 40;
+        
+        let isNewInput = false;
+
+        let game = null;
+        let mode = 'easy';
+        let menuIndex = 0;
+        let longPressTimer = null;
+        let longPressTriggered = false;
+        let pressStartPos = null;
+        let pressStartClientX = 0;
+        let pressStartClientY = 0;
+        let isDragging = false;
+        let timerInterval = null;
+        let startTime = null;
+        let elapsedSeconds = 0;
+        let minCellSize = 15;
+        let maxCellSize = 40;
+        let endlessPhase = 'countdown';
+        let endlessPhaseStartTime = 0;
+        let endlessWrongFlagCount = 0;
+        let endlessUnmarkedMineCount = 0;
+        let endlessHp = 100;
+        let endlessStartTime = 0;
+        let currentInputField = null;
+        let customConfig = { rows: 9, cols: 9, mines: 10 };
+        let pinchStartDistance = 0;
+        let pinchStartCellSize = 0;
+        let isPinching = false;
+        let initialCellSizeForWin = null;
+        let autoFlagEnabled = false;
+        let soundEnabled = true;
+        let vibrateEnabled = true;
+        let currentTheme = 'neon-dark';
+        let audioCtx = null;
+        let loadingTimer = null;
+        
+        let hoveredCell = { row: -1, col: -1 };
+        let hoverRotation = 0;
+        let pressedCells = new Set();
+
+        function loadSettings() {
+            const saved = storage.getItem('minesweeper_settings');
+            if (saved) {
+                try {
+                    const s = JSON.parse(saved);
+                    soundEnabled = s.soundEnabled !== undefined ? s.soundEnabled : true;
+                    vibrateEnabled = s.vibrateEnabled !== undefined ? s.vibrateEnabled : true;
+                    currentTheme = s.theme || 'neon-dark';
+                } catch (e) {}
+            }
+            soundToggle.checked = soundEnabled;
+            vibrateToggle.checked = vibrateEnabled;
+            document.body.dataset.theme = currentTheme;
+            updateThemeButtons();
+        }
+
+        function saveSettings() {
+            storage.setItem('minesweeper_settings', JSON.stringify({ soundEnabled, vibrateEnabled, theme: currentTheme }));
+        }
+
+        function updateThemeButtons() {
+            themeButtons.querySelectorAll('button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.theme === currentTheme);
+            });
+        }
+
+        function loadStats() {
+            const saved = storage.getItem('minesweeper_stats');
+            if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+            return { totalGames: 0, totalWins: 0, bestTimes: {} };
+        }
+
+        function saveStats(stats) {
+            storage.setItem('minesweeper_stats', JSON.stringify(stats));
+        }
+
+        function updateStatsDisplay() {
+            const stats = loadStats();
+            const winRate = stats.totalGames ? Math.round((stats.totalWins / stats.totalGames) * 100) : 0;
+            statsDiv.textContent = `总局数: ${stats.totalGames} | 胜率: ${winRate}%`;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            if (!audioCtx) {
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioCtx.state === 'suspended') audioCtx.resume();
+                } catch (e) { return; }
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            let freq = 800;
+            if (type === 'flag') freq = 600;
+            if (type === 'reveal') freq = 1000;
+            if (type === 'boom') freq = 200;
+            if (type === 'win') freq = 1200;
+            osc.frequency.value = freq;
+            gain.gain.value = 0.15;
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function vibrate(pattern) {
+            if (vibrateEnabled && navigator.vibrate) navigator.vibrate(pattern);
+        }
+
+        function calculateCellSize(rows, cols, isFullscreen) {
+            let availWidth = window.innerWidth - 20;
+            let availHeight = window.innerHeight - 180;
+            if (isFullscreen) {
+                availWidth = window.innerWidth;
+                availHeight = window.innerHeight - 70;
+            }
+            return Math.max(15, Math.floor(Math.min(availWidth / cols, availHeight / rows)));
+        }
+        function updateZoomBounds() {
+            maxCellSize = calculateCellSize(9, 9, false);
+            minCellSize = calculateCellSize(16, 30, false);
+            if (minCellSize > maxCellSize) [minCellSize, maxCellSize] = [maxCellSize, minCellSize];
+        }
+        updateZoomBounds();
+
+        function updateMenuSelection() { menuItems.forEach((item, i) => item.classList.toggle('selected', i === menuIndex)); }
+        function navigateMenu(d) { menuIndex = (menuIndex + d + menuItems.length) % menuItems.length; updateMenuSelection(); }
+        
+        function startGame(m) {
+            mode = m;
+            autoFlagEnabled = false;
+            updateAutoFlagButton();
+            
+            if (mode === 'classic-custom') {
+                customDialog.style.display = 'flex';
+                inputRowsDialog.value = customConfig.rows;
+                inputColsDialog.value = customConfig.cols;
+                inputMinesDialog.value = customConfig.mines;
+                return;
+            }
+            
+            if (mode === 'extraordinary-custom') {
+                menuDiv.style.display = 'none';
+                initEditor();
+                return;
+            }
+            
+            menuDiv.style.display = 'none';
+            loadingOverlay.style.display = 'flex';
+            tipText.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+            if (loadingTimer) clearTimeout(loadingTimer);
+            loadingTimer = setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                gameDiv.style.display = 'flex';
+                overlay.style.display = 'none';
+                rainbowBarContainer.style.display = (mode === 'endless') ? 'block' : 'none';
+                hpDisplay.style.display = (mode === 'endless') ? 'inline-block' : 'none';
+                initGame();
+                if (mode === 'easy' && !storage.getItem('tutorial_seen')) {
+                    tutorialOverlay.style.display = 'flex';
+                    storage.setItem('tutorial_seen', 'true');
+                }
+            }, 1500);
+        }
+        
+        function exitToMenu() {
+            game = null;
+            clearInterval(timerInterval);
+            menuDiv.style.display = 'flex';
+            gameDiv.style.display = 'none';
+            editorOverlay.style.display = 'none';
+            overlay.style.display = 'none';
+            loadingOverlay.style.display = 'none';
+            customDialog.style.display = 'none';
+            settingsDialog.style.display = 'none';
+            archiveOverlay.style.display = 'none';
+            loadOverlay.style.display = 'none';
+            rainbowBarContainer.style.display = 'none';
+            numKeyboard.style.display = 'none';
+            boardSizeSpan.style.display = 'none';
+            endlessStats.style.display = 'none';
+            endlessRules.style.display = 'none';
+            btnAutoFlag.style.display = 'block';
+            gameDiv.classList.remove('fullscreen-mode');
+            window.removeEventListener('resize', handleResize);
+            updateStatsDisplay();
+        }
+        
+        function restartGame() {
+            if (game && game.scrollTimer) clearInterval(game.scrollTimer);
+            clearInterval(timerInterval);
+            if (mode === 'extraordinary-custom') {
+                initEditor();
+            } else {
+                initGame();
+            }
+        }
+        
+        function updateAutoFlagButton() {
+            if (autoFlagEnabled) {
+                btnAutoFlag.textContent = '自动标雷：开';
+                btnAutoFlag.classList.add('active');
+            } else {
+                btnAutoFlag.textContent = '自动标雷：关';
+                btnAutoFlag.classList.remove('active');
+            }
+        }
+
+        function calculateFullscreenConfig() {
+            const simpleCellSize = calculateCellSize(9, 9, false);
+            const topBarHeight = 80, margin = 10;
+            const availWidth = window.innerWidth - margin * 2;
+            const availHeight = window.innerHeight - topBarHeight - margin * 2;
+            let cols = Math.floor(availWidth / simpleCellSize);
+            let rows = Math.floor(availHeight / simpleCellSize);
+            cols = Math.max(5, cols); rows = Math.max(5, rows);
+            let mines = Math.floor(rows * cols * 0.156);
+            mines = Math.max(1, Math.min(mines, rows * cols - 1));
+            return { rows, cols, mines, cellSize: simpleCellSize };
+        }
+
+        // ====== 存档序列化与反序列化 ======
+        function serializeGrid() {
+            let s = customRows + ',' + customCols + ':';
+            for (let r = 0; r < customRows; r++) {
+                for (let c = 0; c < customCols; c++) {
+                    const v = customGrid[r][c];
+                    s += v === -1 ? 'M' : v === 1 ? 'X' : '0';
+                }
+            }
+            return s;
+        }
+
+        function deserializeGrid(str) {
+            try {
+                const parts = str.split(':');
+                if (parts.length !== 2) return null;
+                const dim = parts[0].split(',');
+                const rows = parseInt(dim[0]);
+                const cols = parseInt(dim[1]);
+                if (!rows || !cols) return null;
+                const data = parts[1];
+                if (data.length !== rows * cols) return null;
+                const grid = [];
+                let idx = 0;
+                for (let r = 0; r < rows; r++) {
+                    const row = [];
+                    for (let c = 0; c < cols; c++) {
+                        const ch = data[idx++];
+                        row.push(ch === 'M' ? -1 : ch === 'X' ? 1 : 0);
+                    }
+                    grid.push(row);
+                }
+                return { rows, cols, grid };
+            } catch (e) { return null; }
+        }
+
+        function getArchives() {
+            const s = storage.getItem('minesweeper_archives');
+            return s ? JSON.parse(s) : [];
+        }
+
+        function saveArchive(str) {
+            const list = getArchives();
+            list.push(str);
+            storage.setItem('minesweeper_archives', JSON.stringify(list));
+            updateArchiveDisplay();
+        }
+
+        function deleteArchive(index) {
+            if (!confirm('确定要删除这条存档吗？')) return;
+            const list = getArchives();
+            list.splice(index, 1);
+            storage.setItem('minesweeper_archives', JSON.stringify(list));
+            updateArchiveDisplay();
+        }
+
+        function copyToClipboard(text, btn) {
+            const done = () => {
+                if (btn) {
+                    btn.classList.add('copied');
+                    const oldText = btn.textContent;
+                    btn.textContent = '已复制';
+                    setTimeout(() => {
+                        btn.classList.remove('copied');
+                        btn.textContent = oldText;
+                    }, 800);
+                }
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done).catch(() => {
+                    fallbackCopy(text);
+                    done();
+                });
+            } else {
+                fallbackCopy(text);
+                done();
+            }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.top = '-1000px';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try { document.execCommand('copy'); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        function updateArchiveDisplay() {
+            const list = getArchives();
+            archiveContent.innerHTML = '';
+            if (list.length === 0) {
+                archiveContent.innerHTML = '<div class="archive-empty">暂无存档</div>';
+                return;
+            }
+            list.forEach((str, index) => {
+                const row = document.createElement('div');
+                row.className = 'archive-row';
+
+                const textSpan = document.createElement('span');
+                textSpan.className = 'archive-text';
+                textSpan.textContent = str;
+                textSpan.title = str;
+
+                const btnGroup = document.createElement('div');
+                btnGroup.className = 'archive-btn-group';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'archive-copy-btn';
+                copyBtn.textContent = '复制';
+                copyBtn.addEventListener('click', () => {
+                    copyToClipboard(str, copyBtn);
+                });
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'archive-delete-btn';
+                delBtn.textContent = '删除';
+                delBtn.addEventListener('click', () => {
+                    deleteArchive(index);
+                });
+
+                btnGroup.appendChild(copyBtn);
+                btnGroup.appendChild(delBtn);
+
+                row.appendChild(textSpan);
+                row.appendChild(btnGroup);
+                archiveContent.appendChild(row);
+            });
+        }
+
+        // ====== 非凡自定义编辑器逻辑 ======
+        function initEditor() {
+            customRows = 7;
+            customCols = 7;
+            editRowsInput.value = customRows;
+            editColsInput.value = customCols;
+            
+            customGrid = Array.from({ length: customRows }, () => Array(customCols).fill(0));
+            customTool = 'add';
+            updateToolButtons();
+            
+            editorOverlay.style.display = 'flex';
+            resizeEditorCanvas();
+            renderEditor();
+        }
+
+        function updateToolButtons() {
+            toolDeleteBtn.classList.toggle('active', customTool === 'delete');
+            toolAddBtn.classList.toggle('active', customTool === 'add');
+            toolMineBtn.classList.toggle('active', customTool === 'mine');
+        }
+
+        function resizeEditorCanvas() {
+            editorCellSize = calculateCellSize(customRows, customCols, false);
+            editorCellSize = Math.max(25, Math.min(50, editorCellSize));
+            editorCanvas.width = customCols * editorCellSize;
+            editorCanvas.height = customRows * editorCellSize;
+            editorCanvas.style.width = editorCanvas.width + 'px';
+            editorCanvas.style.height = editorCanvas.height + 'px';
+        }
+
+        function renderEditor() {
+            editorCtx.clearRect(0, 0, editorCanvas.width, editorCanvas.height);
+            const theme = document.body.dataset.theme;
+            const root = document.body;
+            const revealedColor = getComputedStyle(root).getPropertyValue('--cell-revealed').trim();
+            const borderColor = getComputedStyle(root).getPropertyValue('--cell-border').trim();
+            const borderWidth = parseFloat(getComputedStyle(root).getPropertyValue('--border-width')) || 0.5;
+            
+            for (let r = 0; r < customRows; r++) {
+                for (let c = 0; c < customCols; c++) {
+                    const x = c * editorCellSize;
+                    const y = r * editorCellSize;
+                    const val = customGrid[r][c];
+                    
+                    if (val === 1) {
+                        editorCtx.fillStyle = 'rgba(0,0,0,0.2)';
+                        editorCtx.fillRect(x, y, editorCellSize, editorCellSize);
+                        editorCtx.strokeStyle = '#555';
+                        editorCtx.lineWidth = 1;
+                        editorCtx.setLineDash([4, 4]);
+                        editorCtx.strokeRect(x, y, editorCellSize, editorCellSize);
+                        editorCtx.setLineDash([]);
+                    } else {
+                        editorCtx.fillStyle = revealedColor;
+                        editorCtx.fillRect(x, y, editorCellSize, editorCellSize);
+                        editorCtx.strokeStyle = borderColor;
+                        editorCtx.lineWidth = borderWidth;
+                        editorCtx.strokeRect(x, y, editorCellSize, editorCellSize);
+                        
+                        if (val === -1) {
+                            const cx = x + editorCellSize / 2;
+                            const cy = y + editorCellSize / 2;
+                            const rad = editorCellSize * 0.28;
+                            
+                            if (theme === 'retro') {
+                                const pix = Math.max(2, Math.floor(editorCellSize / 8));
+                                editorCtx.fillStyle = '#000';
+                                for (let i = -3; i <= 3; i++) {
+                                    for (let j = -3; j <= 3; j++) {
+                                        if (Math.abs(i) === 3 && Math.abs(j) === 3) continue;
+                                        const dx = i * pix, dy = j * pix;
+                                        if (dx*dx + dy*dy <= rad*rad) {
+                                            editorCtx.fillRect(cx + dx - pix/2, cy + dy - pix/2, pix, pix);
+                                        }
+                                    }
+                                }
+                                editorCtx.fillStyle = '#fff';
+                                editorCtx.fillRect(cx - pix*2, cy - pix*2, pix, pix);
+                            } else if (theme === 'nature') {
+                                editorCtx.font = `${editorCellSize * 0.6}px Arial`;
+                                editorCtx.textAlign = 'center'; editorCtx.textBaseline = 'middle';
+                                editorCtx.fillText('🌰', cx, cy);
+                            } else if (theme === 'flat') {
+                                editorCtx.font = `${editorCellSize * 0.55}px Arial`;
+                                editorCtx.textAlign = 'center'; editorCtx.textBaseline = 'middle';
+                                editorCtx.fillText('💥', cx, cy);
+                            } else {
+                                editorCtx.fillStyle = '#000';
+                                editorCtx.beginPath(); editorCtx.arc(cx, cy, rad, 0, Math.PI*2); editorCtx.fill();
+                                editorCtx.fillStyle = 'rgba(255,255,255,0.2)';
+                                editorCtx.beginPath(); editorCtx.arc(cx - rad*0.3, cy - rad*0.3, rad*0.4, 0, Math.PI*2); editorCtx.fill();
+                                editorCtx.strokeStyle = '#000'; editorCtx.lineWidth = 1;
+                                for (let i=0; i<8; i++) {
+                                    const a = (i/8)*Math.PI*2;
+                                    editorCtx.beginPath();
+                                    editorCtx.moveTo(cx + Math.cos(a)*rad, cy + Math.sin(a)*rad);
+                                    editorCtx.lineTo(cx + Math.cos(a)*(rad+3), cy + Math.sin(a)*(rad+3));
+                                    editorCtx.stroke();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function handleEditorClick(e) {
+            const rect = editorCanvas.getBoundingClientRect();
+            const scaleX = editorCanvas.width / rect.width;
+            const scaleY = editorCanvas.height / rect.height;
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            const col = Math.floor(x / editorCellSize);
+            const row = Math.floor(y / editorCellSize);
+            
+            if (row >= 0 && row < customRows && col >= 0 && col < customCols) {
+                if (customTool === 'delete') {
+                    if (customGrid[row][col] === -1) {
+                        customGrid[row][col] = 0;
+                    } else {
+                        customGrid[row][col] = 1;
+                    }
+                } else if (customTool === 'add') {
+                    customGrid[row][col] = 0;
+                } else if (customTool === 'mine') {
+                    if (customGrid[row][col] === -1) {
+                        customGrid[row][col] = 0;
+                    } else {
+                        customGrid[row][col] = -1;
+                    }
+                }
+                renderEditor();
+            }
+        }
+
+        function startCustomGame() {
+            let minesCount = 0;
+            for (let r = 0; r < customRows; r++) {
+                for (let c = 0; c < customCols; c++) {
+                    if (customGrid[r][c] === -1) minesCount++;
+                }
+            }
+            
+            const rows = customRows;
+            const cols = customCols;
+            const cellSize = calculateCellSize(rows, cols, false);
+            const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--cell-gap')) || 0;
+            const effectiveCellSize = cellSize + gap;
+
+            canvas.width = cols * effectiveCellSize;
+            canvas.height = rows * effectiveCellSize;
+            canvas.style.width = canvas.width + 'px';
+            canvas.style.height = canvas.height + 'px';
+            canvasWrapper.scrollTop = 0; canvasWrapper.scrollLeft = 0;
+
+            const board = [];
+            const revealed = [];
+            const flagged = [];
+            const disabled = [];
+
+            for (let r = 0; r < rows; r++) {
+                const boardRow = [];
+                const revealedRow = [];
+                const flaggedRow = [];
+                const disabledRow = [];
+                for (let c = 0; c < cols; c++) {
+                    const val = customGrid[r][c];
+                    if (val === 1) {
+                        boardRow.push(0);
+                        revealedRow.push(true);
+                        flaggedRow.push(0);
+                        disabledRow.push(true);
+                    } else {
+                        boardRow.push(val === -1 ? -1 : 0);
+                        revealedRow.push(false);
+                        flaggedRow.push(0);
+                        disabledRow.push(false);
+                    }
+                }
+                board.push(boardRow);
+                revealed.push(revealedRow);
+                flagged.push(flaggedRow);
+                disabled.push(disabledRow);
+            }
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (board[r][c] === -1 || disabled[r][c]) continue;
+                    let n = 0;
+                    for (let dr = -1; dr <= 1; dr++) {
+                        for (let dc = -1; dc <= 1; dc++) {
+                            const nr = r + dr, nc = c + dc;
+                            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && board[nr][nc] === -1) n++;
+                        }
+                    }
+                    board[r][c] = n;
+                }
+            }
+
+            game = {
+                mode: 'extraordinary-custom', rows, cols, mines: minesCount, cellSize, gap,
+                effectiveCellSize,
+                board, revealed, flagged, disabled,
+                firstClick: false, gameOver: false, win: false, score: 0,
+                scrolling: false, endless: false,
+                scrollTimer: null, animationId: null, flashCells: [], flashStartTime: 0, flashingMine: null
+            };
+
+            boardSizeSpan.style.display = 'none';
+            customInputs.style.display = 'none';
+            hpDisplay.style.display = 'none';
+            rainbowBarContainer.style.display = 'none';
+            endlessStats.style.display = 'none';
+            endlessRules.style.display = 'none';
+            btnAutoFlag.style.display = 'block';
+            easyInfo.style.display = 'none';
+
+            editorOverlay.style.display = 'none';
+            gameDiv.style.display = 'flex';
+            overlay.style.display = 'none';
+            clearInterval(timerInterval); elapsedSeconds = 0; startTime = null;
+            timerSpan.textContent = '000'; smileyBtn.textContent = '😊'; updateMinesCount();
+            if (game.animationId) cancelAnimationFrame(game.animationId);
+            gameLoop();
+        }
+
+        function initGame() {
+            let config, cellSize;
+            if (mode === 'fullscreen') {
+                config = calculateFullscreenConfig();
+                cellSize = config.cellSize;
+                gameDiv.classList.add('fullscreen-mode');
+            } else {
+                gameDiv.classList.remove('fullscreen-mode');
+                if (mode === 'classic-custom') {
+                    config = customConfig;
+                    cellSize = calculateCellSize(config.rows, config.cols, false);
+                } else {
+                    config = DIFFICULTIES[mode];
+                    cellSize = calculateCellSize(config.rows, config.cols, false);
+                }
+                if (mode === 'easy') cellSize = Math.max(minCellSize, cellSize - 2);
+            }
+            cellSize = Math.max(minCellSize, Math.min(maxCellSize, cellSize));
+            initialCellSizeForWin = cellSize;
+
+            const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--cell-gap')) || 0;
+            const effectiveCellSize = cellSize + gap;
+
+            canvas.width = config.cols * effectiveCellSize;
+            canvas.height = config.rows * effectiveCellSize;
+            canvas.style.width = canvas.width + 'px';
+            canvas.style.height = canvas.height + 'px';
+            canvasWrapper.scrollTop = 0; canvasWrapper.scrollLeft = 0;
+
+            game = {
+                mode, rows: config.rows, cols: config.cols, mines: config.mines, cellSize, gap,
+                effectiveCellSize,
+                board: [], revealed: [], flagged: [],
+                firstClick: true, gameOver: false, win: false, score: 0,
+                scrolling: mode === 'endless', endless: mode === 'endless',
+                scrollTimer: null, animationId: null, flashCells: [], flashStartTime: 0, flashingMine: null
+            };
+
+            boardSizeSpan.style.display = (mode === 'fullscreen') ? 'inline-block' : 'none';
+            if (mode === 'fullscreen') boardSizeSpan.textContent = `${game.rows}×${game.cols}`;
+            customInputs.style.display = (mode === 'classic-custom') ? 'flex' : 'none';
+            if (mode === 'classic-custom') {
+                inputRows.value = game.rows; inputCols.value = game.cols; inputMines.value = game.mines;
+            }
+
+            if (game.endless) {
+                endlessHp = 100; endlessWrongFlagCount = 0; endlessUnmarkedMineCount = 0;
+                endlessPhase = 'countdown'; endlessPhaseStartTime = performance.now(); endlessStartTime = performance.now();
+                hpDisplay.textContent = `❤️${endlessHp}`; hpDisplay.style.display = 'inline-block';
+                rainbowBarContainer.style.display = 'block'; rainbowBar.style.width = '100%';
+                endlessStats.style.display = 'block'; endlessRules.style.display = 'block';
+                endlessRules.textContent = `无尽挑战规则：\n1，扫雷区域会向上滚动（初始倒计时60秒，然后开始30秒加载，加载满后）最上方5排雷会消失，下方会新生成5排雷（然后再清空彩虹加载条，开始30秒加载，不断重复这个过程）\n2，计数扣HP，玩家初始有100HP：\n错旗5次扣3HP；未标雷3次扣2HP；踩雷扣5HP`;
+                updateEndlessStats();
+                btnAutoFlag.style.display = 'none';
+            } else {
+                hpDisplay.style.display = 'none'; rainbowBarContainer.style.display = 'none';
+                endlessStats.style.display = 'none'; endlessRules.style.display = 'none';
+                btnAutoFlag.style.display = 'block';
+            }
+
+            if (mode === 'easy') easyInfo.style.display = 'block'; else easyInfo.style.display = 'none';
+
+            for (let r = 0; r < game.rows; r++) {
+                game.board.push(Array(game.cols).fill(0));
+                game.revealed.push(Array(game.cols).fill(false));
+                game.flagged.push(Array(game.cols).fill(0));
+            }
+
+            overlay.style.display = 'none';
+            clearInterval(timerInterval); elapsedSeconds = 0; startTime = null;
+            timerSpan.textContent = '000'; smileyBtn.textContent = '😊'; updateMinesCount();
+            if (game.animationId) cancelAnimationFrame(game.animationId);
+            gameLoop();
+        }
+
+        function startTimer() {
+            if (startTime === null && !game.gameOver && !game.win) {
+                startTime = Date.now();
+                timerInterval = setInterval(() => {
+                    if (game && !game.gameOver && !game.win) {
+                        elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                        timerSpan.textContent = elapsedSeconds.toString().padStart(3, '0');
+                    } else clearInterval(timerInterval);
+                }, 200);
+            }
+        }
+        function stopTimer() { clearInterval(timerInterval); }
+
+        function placeMines(safeRow, safeCol) {
+            const rows = game.rows, cols = game.cols;
+            for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) game.board[r][c] = 0;
+            const safeZone = new Set();
+            for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                const nr = safeRow + dr, nc = safeCol + dc;
+                if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) safeZone.add(`${nr},${nc}`);
+            }
+            const candidates = [];
+            for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!safeZone.has(`${r},${c}`)) candidates.push([r, c]);
+            candidates.sort(() => Math.random() - 0.5);
+            const mineCount = Math.min(game.mines, candidates.length);
+            for (let i = 0; i < mineCount; i++) { const [r, c] = candidates[i]; game.board[r][c] = -1; }
+            for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+                if (game.board[r][c] === -1) continue;
+                let n = 0;
+                for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < rows && nc >= 0 && nc < cols && game.board[nr][nc] === -1) n++;
+                }
+                game.board[r][c] = n;
+            }
+        }
+
+        function getNatureOffset(row, col, size) {
+            const hash = (row * 31 + col * 17) % 100;
+            return (hash / 100) * 0.8 - 0.4;
+        }
+
+        function drawCellAt(row, col, x, y, board, revealed, flagged, flashMine = false) {
+            const cellSize = game.cellSize;
+            const gap = game.gap || 0;
+            const effective = cellSize + gap;
+            
+            const root = document.body; 
+            
+            const theme = document.body.dataset.theme;
+
+            const unrevealedColor = getComputedStyle(root).getPropertyValue('--cell-unrevealed').trim();
+            const revealedColor = getComputedStyle(root).getPropertyValue('--cell-revealed').trim();
+            const borderColor = getComputedStyle(root).getPropertyValue('--cell-border').trim();
+            const borderWidth = parseFloat(getComputedStyle(root).getPropertyValue('--border-width')) || 0.5;
+            const bevel = getComputedStyle(root).getPropertyValue('--tile-bevel').trim();
+            const flagColor = getComputedStyle(root).getPropertyValue('--flag-color').trim();
+            const questionColor = getComputedStyle(root).getPropertyValue('--question-color').trim();
+            const radius = parseInt(getComputedStyle(root).getPropertyValue('--tile-radius')) || 0;
+            const numberColors = getComputedStyle(root).getPropertyValue('--number-colors').split(',').map(c => c.trim());
+            const mineEmoji = getComputedStyle(root).getPropertyValue('--mine-emoji').trim();
+            const fontSizeRatio = parseFloat(getComputedStyle(root).getPropertyValue('--number-font-size-ratio')) || 0.5;
+            const numShadow = getComputedStyle(root).getPropertyValue('--num-shadow').trim();
+
+            let numberFont = 'Arial';
+            if (theme === 'retro') numberFont = "'Press Start 2P', monospace";
+            else if (theme === 'flat') numberFont = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+            else if (theme === 'nature') numberFont = "'Caveat', 'ZCOOL KuaiLe', cursive";
+            else numberFont = 'Arial';
+
+            const drawX = x + gap / 2;
+            const drawY = y + gap / 2;
+            const size = cellSize;
+            const isHovered = (hoveredCell.row === row && hoveredCell.col === col);
+            const isPressed = pressedCells.has(`${row},${col}`);
+
+            if (revealed[row][col]) {
+                if (flashMine) {
+                    ctx.fillStyle = '#ff0000';
+                } else {
+                    ctx.fillStyle = revealedColor;
+                }
+                if (theme === 'retro') {
+                    ctx.fillRect(drawX, drawY, size, size);
+                    ctx.fillStyle = '#808080';
+                    ctx.fillRect(drawX, drawY, size, 3);
+                    ctx.fillRect(drawX, drawY, 3, size);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(drawX, drawY + size - 3, size, 3);
+                    ctx.fillRect(drawX + size - 3, drawY, 3, size);
+                } else if (theme === 'flat') {
+                    ctx.beginPath();
+                    ctx.roundRect(drawX, drawY, size, size, radius);
+                    ctx.fill();
+                } else if (theme === 'nature') {
+                    ctx.save();
+                    ctx.translate(drawX, drawY);
+                    const offX = getNatureOffset(row, col, size);
+                    const offY = getNatureOffset(row + 7, col + 13, size);
+                    ctx.beginPath();
+                    const pts = [
+                        [0 + offX, 0 + offY],
+                        [size + offX, 0 + offY],
+                        [size + offX, size + offY],
+                        [0 + offX, size + offY]
+                    ];
+                    ctx.moveTo(pts[0][0], pts[0][1]);
+                    for (let i = 1; i < pts.length; i++) {
+                        ctx.lineTo(pts[i][0], pts[i][1]);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = borderColor;
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 3]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                } else {
+                    if (radius > 0) {
+                        ctx.beginPath();
+                        ctx.roundRect(drawX, drawY, size, size, radius);
+                        ctx.fill();
+                    } else {
+                        ctx.fillRect(drawX, drawY, size, size);
+                    }
+                }
+
+                if (theme !== 'retro' && theme !== 'flat' && theme !== 'nature') {
+                    ctx.strokeStyle = borderColor;
+                    ctx.lineWidth = borderWidth;
+                    if (radius > 0) {
+                        ctx.beginPath();
+                        ctx.roundRect(drawX, drawY, size, size, radius);
+                        ctx.stroke();
+                    } else {
+                        ctx.strokeRect(drawX, drawY, size, size);
+                    }
+                }
+
+                if (board[row][col] === -1) {
+                    if (theme === 'retro') {
+                        const pix = Math.max(2, Math.floor(size / 8));
+                        const cx = drawX + size/2, cy = drawY + size/2;
+                        const rad = size * 0.3;
+                        ctx.fillStyle = '#000';
+                        for (let i = -3; i <= 3; i++) {
+                            for (let j = -3; j <= 3; j++) {
+                                if (Math.abs(i) === 3 && Math.abs(j) === 3) continue;
+                                const dx = i * pix, dy = j * pix;
+                                if (dx*dx + dy*dy <= rad*rad) {
+                                    ctx.fillRect(cx + dx - pix/2, cy + dy - pix/2, pix, pix);
+                                }
+                            }
+                        }
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(cx - pix*2, cy - pix*2, pix, pix);
+                    } else if (theme === 'nature') {
+                        ctx.font = `${size * 0.6}px Arial`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText('🌰', drawX + size/2, drawY + size/2);
+                    } else if (theme === 'flat') {
+                        ctx.font = `${size * 0.55}px Arial`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText('💥', drawX + size/2, drawY + size/2);
+                    } else {
+                        const cx = drawX + size/2, cy = drawY + size/2, rad = size * 0.28;
+                        ctx.fillStyle = '#000';
+                        ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI*2); ctx.fill();
+                        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+                        ctx.beginPath(); ctx.arc(cx - rad*0.3, cy - rad*0.3, rad*0.4, 0, Math.PI*2); ctx.fill();
+                        ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+                        for (let i=0; i<8; i++) {
+                            const a = (i/8)*Math.PI*2;
+                            ctx.beginPath();
+                            ctx.moveTo(cx + Math.cos(a)*rad, cy + Math.sin(a)*rad);
+                            ctx.lineTo(cx + Math.cos(a)*(rad+3), cy + Math.sin(a)*(rad+3));
+                            ctx.stroke();
+                        }
+                    }
+                    if (flagged[row][col] === 1) drawFlag(drawX, drawY, size, flagColor, theme);
+                } else if (board[row][col] > 0) {
+                    const num = board[row][col];
+                    ctx.fillStyle = numberColors[num-1] || '#000';
+                    ctx.font = `bold ${Math.floor(size * fontSizeRatio)}px ${numberFont}`;
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    if (numShadow && numShadow !== 'none') {
+                        ctx.shadowColor = numberColors[num-1] || '#000';
+                        ctx.shadowBlur = 8;
+                    }
+                    ctx.fillText(num, drawX + size/2, drawY + size/2);
+                    ctx.shadowBlur = 0;
+                }
+            } else {
+                if (theme === 'retro') {
+                    if (isPressed) {
+                        ctx.fillStyle = '#C0C0C0';
+                        ctx.fillRect(drawX, drawY, size, size);
+                        ctx.fillStyle = '#808080';
+                        ctx.fillRect(drawX, drawY, size, 3);
+                        ctx.fillRect(drawX, drawY, 3, size);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(drawX, drawY + size - 3, size, 3);
+                        ctx.fillRect(drawX + size - 3, drawY, 3, size);
+                    } else {
+                        ctx.fillStyle = unrevealedColor;
+                        ctx.fillRect(drawX, drawY, size, size);
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(drawX, drawY, size, 3);
+                        ctx.fillRect(drawX, drawY, 3, size);
+                        ctx.fillStyle = '#808080';
+                        ctx.fillRect(drawX, drawY + size - 3, size, 3);
+                        ctx.fillRect(drawX + size - 3, drawY, 3, size);
+                    }
+                } else if (theme === 'flat') {
+                    if (isHovered) {
+                        ctx.fillStyle = '#B0B0B8';
+                    } else {
+                        ctx.fillStyle = unrevealedColor;
+                    }
+                    ctx.beginPath();
+                    ctx.roundRect(drawX, drawY, size, size, radius);
+                    ctx.fill();
+                } else if (theme === 'nature') {
+                    ctx.save();
+                    ctx.translate(drawX + size/2, drawY + size/2);
+                    if (isHovered) {
+                        ctx.rotate(hoverRotation * Math.PI / 180);
+                        ctx.scale(1.05, 1.05);
+                    }
+                    ctx.translate(-size/2, -size/2);
+                    ctx.fillStyle = unrevealedColor;
+                    const offX = getNatureOffset(row, col, size);
+                    const offY = getNatureOffset(row + 7, col + 13, size);
+                    ctx.beginPath();
+                    const pts = [
+                        [0 + offX, 0 + offY],
+                        [size + offX, 0 + offY],
+                        [size + offX, size + offY],
+                        [0 + offX, size + offY]
+                    ];
+                    ctx.moveTo(pts[0][0], pts[0][1]);
+                    for (let i = 1; i < pts.length; i++) {
+                        ctx.lineTo(pts[i][0], pts[i][1]);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = borderColor;
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 3]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = unrevealedColor;
+                    if (radius > 0) {
+                        ctx.beginPath();
+                        ctx.roundRect(drawX, drawY, size, size, radius);
+                        ctx.fill();
+                    } else {
+                        ctx.fillRect(drawX, drawY, size, size);
+                    }
+
+                    if (bevel === 'true') {
+                        ctx.strokeStyle = '#ffffff';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(drawX, drawY + size);
+                        ctx.lineTo(drawX, drawY);
+                        ctx.lineTo(drawX + size, drawY);
+                        ctx.stroke();
+                        ctx.strokeStyle = '#7b7b7b';
+                        ctx.beginPath();
+                        ctx.moveTo(drawX + size, drawY);
+                        ctx.lineTo(drawX + size, drawY + size);
+                        ctx.lineTo(drawX, drawY + size);
+                        ctx.stroke();
+                    }
+                }
+
+                if (theme !== 'retro' && theme !== 'flat' && theme !== 'nature') {
+                    ctx.strokeStyle = borderColor;
+                    ctx.lineWidth = borderWidth;
+                    if (radius > 0) {
+                        ctx.beginPath();
+                        ctx.roundRect(drawX, drawY, size, size, radius);
+                        ctx.stroke();
+                    } else {
+                        ctx.strokeRect(drawX, drawY, size, size);
+                    }
+                }
+
+                if (flagged[row][col] === 1) {
+                    drawFlag(drawX, drawY, size, flagColor, theme);
+                } else if (flagged[row][col] === 2) {
+                    ctx.fillStyle = questionColor;
+                    ctx.font = `bold ${Math.floor(size * 0.5)}px ${numberFont}`;
+                    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText('?', drawX + size/2, drawY + size/2);
+                }
+            }
+        }
+
+        function drawFlag(x, y, s, color, theme) {
+            if (theme === 'nature') {
+                ctx.font = `${s * 0.6}px Arial`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('🍀', x + s/2, y + s/2);
+                return;
+            }
+            if (theme === 'flat') {
+                ctx.font = `${s * 0.5}px Arial`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('🚩', x + s/2, y + s/2);
+                return;
+            }
+            if (theme === 'retro') {
+                const cx = x + s/2, cy = y + s/2;
+                const fw = s * 0.4, fh = s * 0.5;
+                ctx.fillStyle = '#ff0000';
+                ctx.beginPath();
+                ctx.moveTo(cx - fw/2, cy - fh/2);
+                ctx.lineTo(cx + fw/2, cy);
+                ctx.lineTo(cx - fw/2, cy + fh/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(cx - fw/2 - 1, cy - fh/2, 2, fh);
+                return;
+            }
+            const cx = x + s/2, cy = y + s/2, f = s * 0.25;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(cx - f, cy - f); ctx.lineTo(cx + f, cy - f * 0.4); ctx.lineTo(cx - f, cy + f * 0.4);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(cx - f, cy - f); ctx.lineTo(cx - f, cy + f); ctx.stroke();
+        }
+
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+                const r = typeof radii === 'number' ? radii : (radii || 0);
+                this.moveTo(x + r, y);
+                this.arcTo(x + w, y, x + w, y + h, r);
+                this.arcTo(x + w, y + h, x, y + h, r);
+                this.arcTo(x, y + h, x, y, r);
+                this.arcTo(x, y, x + w, y, r);
+                this.closePath();
+                return this;
+            };
+        }
+
+        function revealCell(row, col) {
+            if (!game || game.gameOver || game.win || game.isScrolling) return;
+            if (row < 0 || row >= game.rows || col < 0 || col >= game.cols) return;
+            if (game.revealed[row][col] || game.flagged[row][col] === 1) return;
+            if (game.disabled && game.disabled[row][col]) return;
+            if (game.firstClick) { placeMines(row, col); game.firstClick = false; startTimer(); }
+            if (!game.endless && game.board[row][col] === -1 && isTwoChoiceProtection(row, col)) { handleTwoChoiceWin(row, col); return; }
+
+            game.revealed[row][col] = true; game.score++;
+            playSound('reveal'); vibrate(20);
+            if (game.board[row][col] === -1) {
+                if (game.endless) {
+                    endlessHp -= 5; updateHpDisplay();
+                    if (endlessHp <= 0) {
+                        endlessHp = 0; game.gameOver = true; smileyBtn.textContent = '💀';
+                        const sv = formatTime(Math.floor((performance.now() - endlessStartTime) / 1000));
+                        showOverlay(`生命值耗尽！\n存活时间：${sv}`);
+                    }
+                    updateMinesCount(); return;
+                } else {
+                    game.flashingMine = { row, col };
+                    game.gameOver = true; smileyBtn.textContent = '😵'; stopTimer();
+                    playSound('boom'); vibrate(200);
+                    for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) if (game.board[r][c] === -1) game.revealed[r][c] = true;
+                    showOverlay('踩到地雷！'); updateStatsAfterGame(false); return;
+                }
+            }
+            if (game.board[row][col] === 0) {
+                const stack = [[row, col]];
+                while (stack.length) {
+                    const [r, c] = stack.pop();
+                    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                        if (dr === 0 && dc === 0) continue;
+                        const nr = r + dr, nc = c + dc;
+                        if (nr >= 0 && nr < game.rows && nc >= 0 && nc < game.cols && !game.revealed[nr][nc] && game.flagged[nr][nc] !== 1) {
+                            if (game.disabled && game.disabled[nr][nc]) continue;
+                            game.revealed[nr][nc] = true; game.score++;
+                            if (game.board[nr][nc] === 0) stack.push([nr, nc]);
+                        }
+                    }
+                }
+            }
+            updateMinesCount(); checkWin();
+            if (autoFlagEnabled && !game.gameOver && !game.win) autoFlagAllMatchingNumbers();
+        }
+
+        function handleTwoChoiceWin(row, col) {
+            let otherRow = -1, otherCol = -1;
+            for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) if (!game.revealed[r][c] && !(r === row && c === col)) { otherRow = r; otherCol = c; }
+            if (otherRow === -1) return;
+            game.board[row][col] = 0; game.board[otherRow][otherCol] = -1;
+            let count = 0;
+            for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                const nr = row + dr, nc = col + dc;
+                if (nr >= 0 && nr < game.rows && nc >= 0 && nc < game.cols && game.board[nr][nc] === -1) count++;
+            }
+            game.board[row][col] = count;
+            game.flagged[otherRow][otherCol] = 1;
+            game.revealed[row][col] = true;
+            updateMinesCount();
+            game.win = true; smileyBtn.textContent = '😎'; stopTimer();
+            if (game.scrollTimer) clearInterval(game.scrollTimer);
+            if (initialCellSizeForWin && game.cellSize !== initialCellSizeForWin) {
+                setCellSize(initialCellSizeForWin, false);
+                canvasWrapper.scrollTop = 0; canvasWrapper.scrollLeft = 0;
+            }
+            showOverlay('你赢了！（二选一保护）'); updateStatsAfterGame(true);
+        }
+
+        function isTwoChoiceProtection(row, col) {
+            if (!game || game.gameOver || game.win) return false;
+            if (game.board[row][col] !== -1 || game.revealed[row][col] || game.flagged[row][col] === 1) return false;
+            let uc = 0, mc = 0;
+            for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) if (!game.revealed[r][c]) { uc++; if (game.board[r][c] === -1) mc++; }
+            return uc === 2 && mc === 1;
+        }
+
+        function autoFlagAllMatchingNumbers() {
+            if (!game || game.gameOver || game.win) return;
+            for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) {
+                if (!game.revealed[r][c] || game.board[r][c] <= 0) continue;
+                const allU = [], unF = [];
+                for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < game.rows && nc >= 0 && nc < game.cols && !game.revealed[nr][nc]) {
+                        allU.push([nr, nc]); if (game.flagged[nr][nc] === 0) unF.push([nr, nc]);
+                    }
+                }
+                if (allU.length === game.board[r][c]) for (const [nr, nc] of unF) game.flagged[nr][nc] = 1;
+            }
+            updateMinesCount(); draw();
+        }
+
+        function toggleFlag(r, c) {
+            if (!game || game.gameOver || game.win || game.isScrolling) return;
+            if (r < 0 || r >= game.rows || c < 0 || c >= game.cols) return;
+            if (game.disabled && game.disabled[r][c]) return;
+            if (!game.endless && game.revealed[r][c]) return;
+            if (game.endless && game.revealed[r][c] && game.board[r][c] !== -1) return;
+            const cur = game.flagged[r][c];
+            let nf = 0; if (cur === 0) nf = 1; else if (cur === 1) nf = 2; else nf = 0;
+            if (game.endless && cur === 0 && nf === 1 && !game.revealed[r][c] && game.board[r][c] !== -1) {
+                endlessWrongFlagCount++;
+                if (endlessWrongFlagCount >= 5) {
+                    const d = Math.floor(endlessWrongFlagCount / 5) * 3;
+                    endlessHp -= d; endlessWrongFlagCount = endlessWrongFlagCount % 5; updateHpDisplay();
+                    if (endlessHp <= 0) {
+                        endlessHp = 0; game.gameOver = true; smileyBtn.textContent = '💀';
+                        const sv = formatTime(Math.floor((performance.now() - endlessStartTime) / 1000));
+                        showOverlay(`生命值耗尽！\n存活时间：${sv}`);
+                        updateEndlessStats(); return;
+                    }
+                }
+            }
+            game.flagged[r][c] = nf;
+            playSound('flag'); vibrate(30);
+            updateMinesCount(); updateEndlessStats(); draw();
+            if (autoFlagEnabled && !game.gameOver && !game.win) autoFlagAllMatchingNumbers();
+        }
+
+        function chordCell(r, c) {
+            if (!game || game.gameOver || game.win || game.isScrolling) return;
+            if (r < 0 || r >= game.rows || c < 0 || c >= game.cols || !game.revealed[r][c] || game.board[r][c] <= 0) return;
+            if (game.disabled && game.disabled[r][c]) return;
+            let fc = 0; const uu = [];
+            for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                if (dr === 0 && dc === 0) continue;
+                const nr = r + dr, nc = c + dc;
+                if (nr >= 0 && nr < game.rows && nc >= 0 && nc < game.cols) {
+                    if (game.flagged[nr][nc] === 1) fc++;
+                    else if (!game.revealed[nr][nc] && game.flagged[nr][nc] === 0) uu.push([nr, nc]);
+                }
+            }
+            if (fc >= game.board[r][c]) { for (const [nr, nc] of uu) revealCell(nr, nc); }
+            else { game.flashCells = uu; game.flashStartTime = performance.now(); }
+        }
+
+        function checkWin() {
+            if (game.endless) return;
+            for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) {
+                if (game.disabled && game.disabled[r][c]) continue;
+                if (game.board[r][c] !== -1 && !game.revealed[r][c]) return;
+            }
+            game.win = true; handleWin();
+        }
+
+        function handleWin() {
+            for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) if (!game.revealed[r][c] && game.flagged[r][c] === 0 && (!game.disabled || !game.disabled[r][c])) game.flagged[r][c] = 1;
+            updateMinesCount(); smileyBtn.textContent = '😎'; stopTimer(); playSound('win'); vibrate([50,50,100]);
+            if (game.scrollTimer) clearInterval(game.scrollTimer);
+            if (initialCellSizeForWin && game.cellSize !== initialCellSizeForWin) {
+                setCellSize(initialCellSizeForWin, false);
+                canvasWrapper.scrollTop = 0; canvasWrapper.scrollLeft = 0;
+            }
+            showOverlay('你赢了！'); updateStatsAfterGame(true);
+        }
+
+        function updateStatsAfterGame(win) {
+            const st = loadStats(); st.totalGames++;
+            if (win) st.totalWins++;
+            if (win && !game.endless) { if (!st.bestTimes[mode] || elapsedSeconds < st.bestTimes[mode]) st.bestTimes[mode] = elapsedSeconds; }
+            saveStats(st); updateStatsDisplay();
+        }
+
+        function updateMinesCount() {
+            if (!game) return;
+            let tm = game.mines;
+            if (game.endless) { tm = 0; for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) if (game.board[r][c] === -1) tm++; }
+            const fl = game.flagged.flat().filter(f => f === 1).length;
+            minesCountSpan.textContent = (tm - fl).toString().padStart(3, '0');
+        }
+        function updateHpDisplay() { hpDisplay.textContent = `❤️${endlessHp}`; hpDisplay.style.color = '#ff0000'; setTimeout(() => hpDisplay.style.color = '#ff6b6b', 300); }
+        function updateEndlessStats() { if (game && game.endless) endlessStats.textContent = `错旗: ${endlessWrongFlagCount}/5\n未标雷: ${endlessUnmarkedMineCount}/3`; }
+        function formatTime(s) { const m = Math.floor(s / 60), sec = s % 60; return `${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`; }
+
+        function performScroll() {
+            if (!game || !game.endless || game.gameOver || game.win || game.isScrolling) return;
+            game.isScrolling = true;
+            const sr = 5, sd = sr * game.effectiveCellSize, dur = 400, st = performance.now();
+            const sb = game.board.map(r => r.slice()), srv = game.revealed.map(r => r.slice()), sfl = game.flagged.map(r => r.slice());
+            function anim(now) {
+                const el = now - st, p = Math.min(el / dur, 1), off = Math.floor(sd * p);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) {
+                    const x = c * game.effectiveCellSize, y = r * game.effectiveCellSize - off;
+                    if (y + game.effectiveCellSize < 0) continue;
+                    drawCellAt(r, c, x, y, sb, srv, sfl);
+                }
+                if (p < 1) requestAnimationFrame(anim); else completeScroll();
+            }
+            requestAnimationFrame(anim);
+        }
+
+        function completeScroll() {
+            let um = 0;
+            for (let r = 0; r < 5; r++) for (let c = 0; c < game.cols; c++) if (game.board[r][c] === -1 && game.flagged[r][c] !== 1) um++;
+            if (um > 0) {
+                endlessUnmarkedMineCount += um;
+                while (endlessUnmarkedMineCount >= 3) {
+                    endlessUnmarkedMineCount -= 3; endlessHp -= 2; updateHpDisplay();
+                    if (endlessHp <= 0) {
+                        endlessHp = 0; game.gameOver = true; smileyBtn.textContent = '💀';
+                        const sv = formatTime(Math.floor((performance.now() - endlessStartTime) / 1000));
+                        showOverlay(`生命值耗尽！\n存活时间：${sv}`);
+                        game.isScrolling = false; return;
+                    }
+                }
+            }
+            for (let i = 0; i < 5; i++) { game.board.shift(); game.revealed.shift(); game.flagged.shift(); }
+            const mp = game.mines / (game.rows * game.cols);
+            for (let i = 0; i < 5; i++) {
+                const br = [], rr = [], fr = [];
+                for (let c = 0; c < game.cols; c++) { br.push(Math.random() < mp ? -1 : 0); rr.push(false); fr.push(0); }
+                game.board.push(br); game.revealed.push(rr); game.flagged.push(fr);
+            }
+            for (let r = 0; r < game.rows; r++) for (let c = 0; c < game.cols; c++) {
+                if (game.board[r][c] === -1) continue;
+                let n = 0;
+                for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < game.rows && nc >= 0 && nc < game.cols && game.board[nr][nc] === -1) n++;
+                }
+                game.board[r][c] = n;
+            }
+            if (game.flashingMine && game.flashingMine.row < 5) game.flashingMine = null;
+            updateMinesCount(); updateEndlessStats();
+            game.isScrolling = false; endlessPhase = 'loading'; endlessPhaseStartTime = performance.now();
+            rainbowBar.style.width = '0%'; draw();
+            if (autoFlagEnabled) autoFlagAllMatchingNumbers();
+        }
+
+        function updateRainbowBar() {
+            if (!game || !game.endless || game.gameOver || game.win || game.isScrolling) return;
+            const now = performance.now();
+            let p = 0;
+            if (endlessPhase === 'countdown') {
+                const el = now - endlessPhaseStartTime;
+                p = Math.max(0, 1 - el / ENDLESS_COUNTDOWN_MS);
+                if (el >= ENDLESS_COUNTDOWN_MS) { endlessPhase = 'loading'; endlessPhaseStartTime = now; p = 0; }
+            } else {
+                const el = now - endlessPhaseStartTime;
+                p = Math.min(1, el / ENDLESS_LOADING_MS);
+                if (p >= 1) { performScroll(); return; }
+            }
+            rainbowBar.style.width = (p * 100) + '%';
+        }
+
+        function showOverlay(t) { resultText.textContent = t; overlay.style.display = 'flex'; }
+        function draw() {
+            if (!game) return;
+            const { rows, cols, board, revealed, flagged } = game;
+            const effective = game.effectiveCellSize;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const fl = performance.now() - game.flashStartTime < FLASH_DURATION_MS;
+            const fs = fl ? new Set(game.flashCells.map(([r,c]) => `${r},${c}`)) : null;
+            for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+                const x = c * effective, y = r * effective;
+                if (fs && fs.has(`${r},${c}`) && !revealed[r][c] && flagged[r][c] === 0) {
+                    ctx.fillStyle = '#ffd43b';
+                    ctx.fillRect(x, y, effective, effective);
+                    ctx.strokeStyle = '#1e1e2e';
+                    ctx.lineWidth = 0.5;
+                    ctx.strokeRect(x, y, effective, effective);
+                    continue;
+                }
+                const fm = game.flashingMine && r === game.flashingMine.row && c === game.flashingMine.col && revealed[r][c] && board[r][c] === -1;
+                drawCellAt(r, c, x, y, board, revealed, flagged, fm);
+            }
+        }
+        function gameLoop() {
+            if (!game) return;
+            if (!game.isScrolling) {
+                draw();
+                if (game.endless && !game.gameOver && !game.win) updateRainbowBar();
+            }
+            game.animationId = requestAnimationFrame(gameLoop);
+        }
+        function setCellSize(ns, keep = true) {
+            if (!game) return;
+            ns = Math.max(minCellSize, Math.min(maxCellSize, ns));
+            if (ns === game.cellSize) return;
+            const ow = canvas.width, oh = canvas.height;
+            const rx = keep ? canvasWrapper.scrollLeft / ow : 0, ry = keep ? canvasWrapper.scrollTop / oh : 0;
+            game.cellSize = ns;
+            game.effectiveCellSize = ns + game.gap;
+            canvas.width = game.cols * game.effectiveCellSize;
+            canvas.height = game.rows * game.effectiveCellSize;
+            canvas.style.width = canvas.width + 'px';
+            canvas.style.height = canvas.height + 'px';
+            if (keep) { canvasWrapper.scrollLeft = rx * canvas.width; canvasWrapper.scrollTop = ry * canvas.height; }
+            else { canvasWrapper.scrollLeft = 0; canvasWrapper.scrollTop = 0; }
+            draw();
+        }
+
+        function getGridPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+            let cx, cy;
+            if (e.touches && e.touches.length > 0) { cx = e.touches[0].clientX; cy = e.touches[0].clientY; }
+            else { cx = e.clientX; cy = e.clientY; }
+            const mx = (cx - rect.left) * sx, my = (cy - rect.top) * sy;
+            const effective = game.effectiveCellSize;
+            return { row: Math.floor(my / effective), col: Math.floor(mx / effective) };
+        }
+        function onPointerDown(e) {
+            if (isPinching || game?.isScrolling) return;
+            if (!game || game.gameOver || game.win) return;
+            if (e.button === 2) {
+                e.preventDefault();
+                const p = getGridPosition(e);
+                if (p.row < 0 || p.row >= game.rows || p.col < 0 || p.col >= game.cols) return;
+                if (game.disabled && game.disabled[p.row][p.col]) return;
+                if (game.revealed[p.row][p.col] && game.board[p.row][p.col] > 0) chordCell(p.row, p.col);
+                else toggleFlag(p.row, p.col);
+                return;
+            }
+            e.preventDefault();
+            const p = getGridPosition(e);
+            if (p.row < 0 || p.row >= game.rows || p.col < 0 || p.col >= game.cols) return;
+            if (game.disabled && game.disabled[p.row][p.col]) return;
+            
+            pressedCells.clear();
+            pressedCells.add(`${p.row},${p.col}`);
+
+            const cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
+            pressStartClientX = cx; pressStartClientY = cy; pressStartPos = p;
+            longPressTriggered = false; isDragging = false;
+            longPressTimer = setTimeout(() => {
+                if (pressStartPos) { const pr = pressStartPos.row, pc = pressStartPos.col; if (!game.revealed[pr][pc]) revealCell(pr, pc); longPressTriggered = true; }
+            }, LONG_PRESS_MS);
+        }
+        function onPointerMove(e) {
+            if (isPinching || game?.isScrolling) return;
+            if (!game || game.gameOver || game.win) return;
+            
+            const cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            if (!e.touches) {
+                const rect = canvas.getBoundingClientRect();
+                const sx = canvas.width / rect.width, sy = canvas.height / rect.height;
+                const mx = (cx - rect.left) * sx, my = (cy - rect.top) * sy;
+                const effective = game.effectiveCellSize;
+                const hr = Math.floor(my / effective);
+                const hc = Math.floor(mx / effective);
+                if (hr !== hoveredCell.row || hc !== hoveredCell.col) {
+                    hoveredCell.row = hr;
+                    hoveredCell.col = hc;
+                    hoverRotation = (Math.random() * 4 - 2);
+                }
+            }
+            
+            if (!pressStartPos) return;
+            const dx = Math.abs(cx - pressStartClientX), dy = Math.abs(cy - pressStartClientY);
+            if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) { 
+                isDragging = true; 
+                pressedCells.clear();
+                if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } 
+                longPressTriggered = false; 
+            }
+        }
+        function onPointerUp(e) {
+            if (isPinching || game?.isScrolling) return;
+            if (!game || game.gameOver || game.win) return;
+            if (e.button === 2) return;
+            e.preventDefault();
+            
+            pressedCells.clear();
+            
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; }
+            if (isDragging) { pressStartPos = null; isDragging = false; return; }
+            if (longPressTriggered) { pressStartPos = null; longPressTriggered = false; return; }
+            if (pressStartPos) {
+                const pr = pressStartPos.row, pc = pressStartPos.col;
+                if (game.firstClick) revealCell(pr, pc);
+                else if (game.endless && game.revealed[pr][pc] && game.board[pr][pc] === -1) toggleFlag(pr, pc);
+                else if (game.revealed[pr][pc] && game.board[pr][pc] > 0) chordCell(pr, pc);
+                else if (!game.revealed[pr][pc]) toggleFlag(pr, pc);
+            }
+            pressStartPos = null; longPressTriggered = false;
+        }
+        function onPointerLeave() { 
+            if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } 
+            pressStartPos = null; longPressTriggered = false; isDragging = false; 
+            pressedCells.clear();
+            hoveredCell.row = -1; hoveredCell.col = -1;
+        }
+        function getDistance(t1, t2) { const dx = t1.clientX - t2.clientX, dy = t1.clientY - t2.clientY; return Math.sqrt(dx * dx + dy * dy); }
+
+        canvas.addEventListener('touchstart', e => { 
+            if (e.touches.length === 2) { 
+                e.preventDefault(); isPinching = true; 
+                pinchStartDistance = getDistance(e.touches[0], e.touches[1]); 
+                pinchStartCellSize = game ? game.cellSize : maxCellSize; 
+                if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } 
+                longPressTriggered = false; pressStartPos = null; 
+                pressedCells.clear();
+            } 
+        }, { passive: false });
+        canvas.addEventListener('touchmove', e => { 
+            if (isPinching && e.touches.length === 2) { 
+                e.preventDefault(); 
+                const nd = getDistance(e.touches[0], e.touches[1]); 
+                setCellSize(Math.round(pinchStartCellSize * (nd / pinchStartDistance)), true); 
+            } 
+        }, { passive: false });
+        canvas.addEventListener('touchend', e => { if (e.touches.length < 2) { isPinching = false; pinchStartDistance = 0; } });
+        canvas.addEventListener('touchcancel', () => { isPinching = false; pinchStartDistance = 0; });
+        canvas.addEventListener('pointerdown', onPointerDown);
+        canvas.addEventListener('pointermove', onPointerMove);
+        canvas.addEventListener('pointerup', onPointerUp);
+        canvas.addEventListener('pointerleave', onPointerLeave);
+        canvas.addEventListener('pointercancel', onPointerLeave);
+        canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+        editorCanvas.addEventListener('pointerdown', handleEditorClick);
+
+        toolDeleteBtn.addEventListener('click', () => { customTool = 'delete'; updateToolButtons(); });
+        toolAddBtn.addEventListener('click', () => { customTool = 'add'; updateToolButtons(); });
+        toolMineBtn.addEventListener('click', () => { customTool = 'mine'; updateToolButtons(); });
+        btnStartEdit.addEventListener('click', startCustomGame);
+
+        editRowsInput.addEventListener('click', () => showNumKeyboard(editRowsInput));
+        editColsInput.addEventListener('click', () => showNumKeyboard(editColsInput));
+        inputRowsDialog.addEventListener('click', () => showNumKeyboard(inputRowsDialog));
+        inputColsDialog.addEventListener('click', () => showNumKeyboard(inputColsDialog));
+        inputMinesDialog.addEventListener('click', () => showNumKeyboard(inputMinesDialog));
+
+        btnRestart.addEventListener('click', restartGame);
+        btnMenu.addEventListener('click', exitToMenu);
+        smileyBtn.addEventListener('click', restartGame);
+        btnHome.addEventListener('click', exitToMenu);
+        btnAutoFlag.addEventListener('click', () => { autoFlagEnabled = !autoFlagEnabled; updateAutoFlagButton(); if (game && !game.firstClick) restartGame(); });
+        
+        btnClearStats.addEventListener('click', () => {
+            if (confirm('确定要清除所有统计数据吗？')) {
+                storage.removeItem('minesweeper_stats');
+                updateStatsDisplay();
+            }
+        });
+
+        btnCustomConfirm.addEventListener('click', () => {
+            let rows = parseInt(inputRowsDialog.value) || 9;
+            let cols = parseInt(inputColsDialog.value) || 9;
+            let mines = parseInt(inputMinesDialog.value) || 10;
+            rows = Math.max(5, Math.min(30, rows)); 
+            cols = Math.max(5, Math.min(30, cols));
+            const maxMines = rows * cols - 1; 
+            mines = Math.max(1, Math.min(maxMines, mines));
+            inputRowsDialog.value = rows; 
+            inputColsDialog.value = cols; 
+            inputMinesDialog.value = mines;
+            customConfig = { rows, cols, mines };
+            customDialog.style.display = 'none';
+            
+            menuDiv.style.display = 'none';
+            loadingOverlay.style.display = 'flex';
+            tipText.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+            if (loadingTimer) clearTimeout(loadingTimer);
+            loadingTimer = setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                gameDiv.style.display = 'flex';
+                overlay.style.display = 'none';
+                initGame();
+            }, 1500);
+        });
+        btnCustomCancel.addEventListener('click', () => { customDialog.style.display = 'none'; });
+
+        btnArchive.addEventListener('click', () => {
+            updateArchiveDisplay();
+            archiveOverlay.style.display = 'flex';
+        });
+        btnCloseArchive.addEventListener('click', () => {
+            archiveOverlay.style.display = 'none';
+        });
+
+        btnSaveCustom.addEventListener('click', () => {
+            const str = serializeGrid();
+            saveArchive(str);
+            alert('已保存到存档！');
+        });
+
+        btnLoadCustom.addEventListener('click', () => {
+            loadOverlay.style.display = 'flex';
+            loadInput.value = '';
+            loadInput.focus();
+        });
+        btnLoadCancel.addEventListener('click', () => {
+            loadOverlay.style.display = 'none';
+        });
+        btnLoadConfirm.addEventListener('click', () => {
+            const str = loadInput.value.trim();
+            if (!str) { alert('请输入存档字符'); return; }
+            const result = deserializeGrid(str);
+            if (!result) { alert('无效的存档字符'); return; }
+            customRows = result.rows;
+            customCols = result.cols;
+            customGrid = result.grid;
+            editRowsInput.value = customRows;
+            editColsInput.value = customCols;
+            resizeEditorCanvas();
+            renderEditor();
+            loadOverlay.style.display = 'none';
+        });
+
+        btnPasteArchive.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (text) {
+                    loadInput.value = text;
+                } else {
+                    alert('剪贴板为空');
+                }
+            } catch (err) {
+                // 兼容 file:// 协议或部分浏览器下剪贴板读取受限的情况
+                alert('无法自动读取剪贴板，请长按输入框手动粘贴');
+            }
+        });
+
+        loadSettings(); updateStatsDisplay();
+        themeButtons.addEventListener('click', e => {
+            if (e.target.tagName === 'BUTTON') {
+                currentTheme = e.target.dataset.theme;
+                document.body.dataset.theme = currentTheme;
+                saveSettings(); updateThemeButtons();
+                if (game) {
+                    const gap = parseInt(getComputedStyle(document.body).getPropertyValue('--cell-gap')) || 0;
+                    game.gap = gap;
+                    game.effectiveCellSize = game.cellSize + gap;
+                    canvas.width = game.cols * game.effectiveCellSize;
+                    canvas.height = game.rows * game.effectiveCellSize;
+                    canvas.style.width = canvas.width + 'px';
+                    canvas.style.height = canvas.height + 'px';
+                    draw();
+                }
+                if (editorOverlay.style.display === 'flex') {
+                    renderEditor();
+                }
+            }
+        });
+        soundToggle.addEventListener('change', () => {
+            soundEnabled = soundToggle.checked;
+            saveSettings();
+            if (soundEnabled) playSound('reveal');
+        });
+        vibrateToggle.addEventListener('change', () => {
+            vibrateEnabled = vibrateToggle.checked;
+            saveSettings();
+            if (vibrateEnabled) vibrate(50);
+        });
+        btnCloseSettings.addEventListener('click', () => { settingsDialog.style.display = 'none'; });
+        document.getElementById('btn-settings').addEventListener('click', () => { settingsDialog.style.display = 'flex'; });
+        btnCloseTutorial.addEventListener('click', () => { tutorialOverlay.style.display = 'none'; });
+
+        document.addEventListener('keydown', e => {
+            if (menuDiv.style.display !== 'none') {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); navigateMenu(e.key === 'ArrowDown' ? 1 : -1); }
+                else if (e.key === 'Enter') { e.preventDefault(); startGame(menuItems[menuIndex].dataset.mode); }
+            } else if (e.key === 'Escape') exitToMenu();
+        });
+
+        menuItems.forEach((item, index) => {
+            item.addEventListener('click', () => { menuIndex = index; updateMenuSelection(); startGame(item.dataset.mode); });
+            item.addEventListener('mouseenter', () => { menuIndex = index; updateMenuSelection(); });
+        });
+
+        document.addEventListener('touchmove', e => { if (gameDiv.style.display !== 'none' && !canvasWrapper.contains(e.target)) e.preventDefault(); }, { passive: false });
+
+        function handleResize() { updateZoomBounds(); if (game && !game.gameOver && !game.win) restartGame(); }
+        window.addEventListener('resize', handleResize);
+
+        function showNumKeyboard(f) { 
+            currentInputField = f; 
+            numKeyboard.style.display = 'grid'; 
+            isNewInput = true;
+        }
+        function hideNumKeyboard() { numKeyboard.style.display = 'none'; currentInputField = null; }
+        
+        function updateEditorSizeFromInputs() {
+            let rows = parseInt(editRowsInput.value);
+            let cols = parseInt(editColsInput.value);
+            if (isNaN(rows)) rows = customRows;
+            if (isNaN(cols)) cols = customCols;
+            rows = Math.max(5, Math.min(30, rows));
+            cols = Math.max(5, Math.min(30, cols));
+            if (rows === customRows && cols === customCols) return;
+            customRows = rows;
+            customCols = cols;
+            customGrid = Array.from({ length: customRows }, () => Array(customCols).fill(0));
+            resizeEditorCanvas();
+            renderEditor();
+        }
+
+        document.querySelectorAll('#num-keyboard button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!currentInputField) return;
+                const key = btn.textContent;
+                
+                if (key === '←') {
+                    currentInputField.value = currentInputField.value.slice(0, -1);
+                    isNewInput = false;
+                    if (currentInputField.id === 'edit-rows' || currentInputField.id === 'edit-cols') {
+                        updateEditorSizeFromInputs();
+                    }
+                } else if (key === '确定') {
+                    hideNumKeyboard();
+                    if (currentInputField.id === 'edit-rows' || currentInputField.id === 'edit-cols') {
+                        if (editRowsInput.value === '') editRowsInput.value = 7;
+                        if (editColsInput.value === '') editColsInput.value = 7;
+                        updateEditorSizeFromInputs();
+                    } else if (currentInputField.id === 'input-rows-dialog' || currentInputField.id === 'input-cols-dialog' || currentInputField.id === 'input-mines-dialog') {
+                        let rows = parseInt(inputRowsDialog.value) || 9;
+                        let cols = parseInt(inputColsDialog.value) || 9;
+                        let mines = parseInt(inputMinesDialog.value) || 10;
+                        rows = Math.max(5, Math.min(30, rows));
+                        cols = Math.max(5, Math.min(30, cols));
+                        const maxMines = rows * cols - 1;
+                        mines = Math.max(1, Math.min(maxMines, mines));
+                        inputRowsDialog.value = rows;
+                        inputColsDialog.value = cols;
+                        inputMinesDialog.value = mines;
+                        customConfig = { rows, cols, mines };
+                        customDialog.style.display = 'none';
+                        menuDiv.style.display = 'none';
+                        loadingOverlay.style.display = 'flex';
+                        tipText.textContent = TIPS[Math.floor(Math.random() * TIPS.length)];
+                        if (loadingTimer) clearTimeout(loadingTimer);
+                        loadingTimer = setTimeout(() => {
+                            loadingOverlay.style.display = 'none';
+                            gameDiv.style.display = 'flex';
+                            overlay.style.display = 'none';
+                            initGame();
+                        }, 1500);
+                    }
+                } else if (/^\d$/.test(key)) {
+                    if (isNewInput) {
+                        currentInputField.value = key;
+                        isNewInput = false;
+                    } else {
+                        if (currentInputField.value.length < 2) currentInputField.value += key;
+                    }
+                    if (currentInputField.id === 'edit-rows' || currentInputField.id === 'edit-cols') {
+                        updateEditorSizeFromInputs();
+                    }
+                }
+            });
+        });
+
+        updateMenuSelection();
+    </script>
+</body>
+</html>
