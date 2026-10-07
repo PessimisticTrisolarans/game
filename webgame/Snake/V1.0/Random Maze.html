@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>贪吃蛇单闭环迷宫</title>
+<style>
+body {
+    background: #222;
+    color: #fff;
+    margin: 8px;
+    font-family: system-ui;
+}
+canvas {
+    border: 2px solid #666;
+    background: #2e4d2e;
+}
+button {
+    padding: 8px 12px;
+    margin: 3px;
+    font-size: 15px;
+}
+#info {
+    margin: 8px 0;
+    font-size: 14px;
+}
+</style>
+</head>
+<body>
+<h3>贪吃蛇唯一闭环迷宫</h3>
+<div>
+<button onclick="generateMaze()">随机生成迷宫</button>
+<button onclick="validateMaze()">执行校验</button>
+</div>
+<div id="info">点击生成迷宫</div>
+<canvas id="cv"></canvas>
+
+<script>
+var cv = document.getElementById("cv");
+var ctx = cv.getContext("2d");
+var cellSize = 24;
+var ROWS = 16;
+var COLS = 22;
+cv.width = COLS * cellSize;
+cv.height = ROWS * cellSize;
+
+var grid = [];
+var dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+var gridTop = 1;
+var gridBottom = ROWS - 2;
+var gridLeft = 1;
+var gridRight = COLS - 2;
+
+function copyGrid(src) {
+    var res = [];
+    for(var i = 0; i < ROWS; i++) {
+        res[i] = src[i].slice();
+    }
+    return res;
+}
+
+function initGrid() {
+    grid = [];
+    for(var i = 0; i < ROWS; i++) {
+        grid[i] = [];
+        for(var j = 0; j < COLS; j++) {
+            grid[i][j] = 0;
+        }
+    }
+    for(var x = gridLeft; x <= gridRight; x++) {
+        grid[gridTop][x] = 1;
+        grid[gridBottom][x] = 1;
+    }
+    for(var y = gridTop; y <= gridBottom; y++) {
+        grid[y][gridLeft] = 1;
+        grid[y][gridRight] = 1;
+    }
+}
+
+function getCandidates() {
+    var list = [];
+    var y, x;
+    // 向下凹陷
+    for(y = gridTop; y <= gridBottom - 1; y++) {
+        for(x = gridLeft + 1; x <= gridRight - 1; x++) {
+            if(grid[y][x-1] === 1 && grid[y][x] === 1 && grid[y][x+1] === 1
+            && grid[y+1][x-1] === 0 && grid[y+1][x] === 0 && grid[y+1][x+1] === 0) {
+                list.push({dir:0, y:y, x:x});
+            }
+        }
+    }
+    // 向上凹陷
+    for(y = gridTop + 1; y <= gridBottom; y++) {
+        for(x = gridLeft + 1; x <= gridRight - 1; x++) {
+            if(grid[y][x-1] === 1 && grid[y][x] === 1 && grid[y][x+1] === 1
+            && grid[y-1][x-1] === 0 && grid[y-1][x] === 0 && grid[y-1][x+1] === 0) {
+                list.push({dir:1, y:y, x:x});
+            }
+        }
+    }
+    // 向左凹陷
+    for(y = gridTop + 1; y <= gridBottom - 1; y++) {
+        for(x = gridLeft + 1; x <= gridRight; x++) {
+            if(grid[y-1][x] === 1 && grid[y][x] === 1 && grid[y+1][x] === 1
+            && grid[y-1][x-1] === 0 && grid[y][x-1] === 0 && grid[y+1][x-1] === 0) {
+                list.push({dir:2, y:y, x:x});
+            }
+        }
+    }
+    // 向右凹陷
+    for(y = gridTop + 1; y <= gridBottom - 1; y++) {
+        for(x = gridLeft; x <= gridRight - 1; x++) {
+            if(grid[y-1][x] === 1 && grid[y][x] === 1 && grid[y+1][x] === 1
+            && grid[y-1][x+1] === 0 && grid[y][x+1] === 0 && grid[y+1][x+1] === 0) {
+                list.push({dir:3, y:y, x:x});
+            }
+        }
+    }
+    return list;
+}
+
+function doIndent(dir, y, x) {
+    switch(dir) {
+        case 0:
+            grid[y][x] = 0;
+            grid[y+1][x-1] = 1;
+            grid[y+1][x] = 1;
+            grid[y+1][x+1] = 1;
+            break;
+        case 1:
+            grid[y][x] = 0;
+            grid[y-1][x-1] = 1;
+            grid[y-1][x] = 1;
+            grid[y-1][x+1] = 1;
+            break;
+        case 2:
+            grid[y][x] = 0;
+            grid[y-1][x-1] = 1;
+            grid[y][x-1] = 1;
+            grid[y+1][x-1] = 1;
+            break;
+        case 3:
+            grid[y][x] = 0;
+            grid[y-1][x+1] = 1;
+            grid[y][x+1] = 1;
+            grid[y+1][x+1] = 1;
+            break;
+    }
+}
+
+function checkValid() {
+    var start = null;
+    var total = 0;
+    for(var i = 0; i < ROWS; i++) {
+        for(var j = 0; j < COLS; j++) {
+            if(grid[i][j] !== 1) continue;
+            total++;
+            if(!start) start = [i, j];
+            var cnt = 0;
+            for(var d = 0; d < 4; d++) {
+                var ni = i + dirs[d][0];
+                var nj = j + dirs[d][1];
+                if(ni >= 0 && ni < ROWS && nj >= 0 && nj < COLS && grid[ni][nj] === 1) {
+                    cnt++;
+                }
+            }
+            if(cnt !== 2) return false;
+        }
+    }
+    if(total === 0) return false;
+
+    var ci = start[0], cj = start[1];
+    var prevI = -1, prevJ = -1;
+    var visited = 0;
+    while(true) {
+        visited++;
+        var next = null;
+        for(var d = 0; d < 4; d++) {
+            var ni2 = ci + dirs[d][0];
+            var nj2 = cj + dirs[d][1];
+            if(ni2 >= 0 && ni2 < ROWS && nj2 >= 0 && nj2 < COLS && grid[ni2][nj2] === 1) {
+                if(!(ni2 === prevI && nj2 === prevJ)) {
+                    next = [ni2, nj2];
+                    break;
+                }
+            }
+        }
+        if(!next) return false;
+        prevI = ci;
+        prevJ = cj;
+        ci = next[0];
+        cj = next[1];
+        if(ci === start[0] && cj === start[1]) break;
+    }
+    return visited === total;
+}
+
+function generateMaze() {
+    initGrid();
+    var maxTry = 600;
+    for(var i = 0; i < maxTry; i++) {
+        var candidates = getCandidates();
+        if(candidates.length === 0) break;
+        var sel = candidates[Math.floor(Math.random() * candidates.length)];
+        var backup = copyGrid(grid);
+        doIndent(sel.dir, sel.y, sel.x);
+        if(!checkValid()) {
+            grid = backup;
+        }
+    }
+    render();
+    validateMaze();
+}
+
+function validateMaze() {
+    if(checkValid()) {
+        var total = 0;
+        for(var i = 0; i < ROWS; i++) {
+            for(var j = 0; j < COLS; j++) {
+                if(grid[i][j] === 1) total++;
+            }
+        }
+        document.getElementById("info").innerText = "✅校验通过！总通路格子：" + total + "，完美单闭环无分支";
+    } else {
+        document.getElementById("info").innerText = "❌校验失败，迷宫存在分支或碎片";
+    }
+}
+
+function render() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for(var i = 0; i < ROWS; i++) {
+        for(var j = 0; j < COLS; j++) {
+            ctx.fillStyle = grid[i][j] === 1 ? "#89bd63" : "#2e4d2e";
+            ctx.fillRect(j * cellSize, i * cellSize, cellSize - 1, cellSize - 1);
+        }
+    }
+}
+
+window.onload = function() {
+    generateMaze();
+};
+</script>
+</body>
+</html>
